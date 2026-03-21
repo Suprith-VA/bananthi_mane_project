@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@400;600&display=swap');
+
+/* ─── CSS VARIABLES ─────────────────────────────────────────── */
+:root {
+  --bg-main: #FFFFFF;
+  --sage-green: #A2B096;
+  --terracotta: #A4624D;
+  --sand-brown: #C9A88C;
+  --text-dark: #2C2A28;
+  --border-color: #EAE6DF;
+  --light-cream: #F9F7F3;
+  --white: #FFFFFF;
+}
+
+/* ─── RESET & BASE ──────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  padding: 0;
+  color: var(--text-dark);
+  background-color: var(--bg-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Playfair Display', serif;
+  font-weight: 400;
+  margin: 0;
+}
+
+p { margin: 0; }
+a { text-decoration: none; }
+button { font-family: 'Inter', sans-serif; cursor: pointer; }
+img { display: block; }
+ul { list-style: none; margin: 0; padding: 0; }
+
+/* ─── GLOBAL BUTTON ─────────────────────────────────────────── */
+.btn {
+  background-color: var(--terracotta);
+  color: #fff;
+  border: none;
+  padding: 14px 28px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  font-weight: 500;
+}
+.btn:hover {
+  background-color: #8C513F;
+  transform: translateY(-2px);
+}
+
+/* ─── GREEN BUTTON VARIANT ──────────────────────────────────── */
+.btn-green {
+  background-color: var(--sage-green);
+  color: #fff;
+  border: none;
+  padding: 14px 28px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-block;
+}
+.btn-green:hover {
+  background-color: #8fa383;
+  transform: translateY(-2px);
+}
+
+.link-green {
+  color: var(--sage-green);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.2s;
+}
+.link-green:hover { color: var(--terracotta); }
+
+/* ─── PAGE FADE-IN ──────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: fadeIn 0.4s ease;
+}

@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                       String    @id @default(uuid())
+  firstName                String?
+  lastName                 String?
+  name                     String?
+  email                    String    @unique
+  phone                    String?
+  password                 String
+  role                     String    @default("user")
+  isAdmin                  Boolean   @default(false)
+  isSubscribedToNewsletter Boolean   @default(true)
+  resetPasswordToken       String?
+  resetPasswordExpire      DateTime?
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  orders Order[]
+  blogs  Blog[]
+
+  @@map("users")
+}
+
+model Product {
+  id            String      @id @default(uuid())
+  title         String
+  slug          String      @unique
+  name          String
+  price         Float
+  images        String[]    @default([])
+  image         String      @default("/images/main.png")
+  description   String      @default("")
+  category      String      @default("General")
+  stockQuantity Int         @default(100)
+  isActive      Boolean     @default(true)
+  isBestseller  Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id                String    @id @default(uuid())
+  userId            String?
+  user              User?     @relation(fields: [userId], references: [id])
+  guestEmail        String?
+  guestPhone        String?
+  guestName         String?
+  totalPrice        Float
+  status            String    @default("pending")
+  fulfillmentStatus String    @default("Processing")
+
+  shippingAddress Json?
+
+  razorpayOrderId String?
+  paymentMethod   String    @default("COD")
+  paymentStatus   String    @default("Pending")
+  isPaid          Boolean   @default(false)
+  paidAt          DateTime?
+
+  shiprocketOrderId String?
+  shipmentId        String?
+  awbCode           String?
+  courierName       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items OrderItem[]
+
+  @@index([userId])
+  @@index([guestEmail])
+  @@index([status])
+  @@index([fulfillmentStatus])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+  name      String
+  price     Float
+  quantity  Int      @default(1)
+  image     String?
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model Blog {
+  id            String    @id @default(uuid())
+  title         String
+  slug          String    @unique
+  content       String
+  featuredImage String?   @default("")
+  authorId      String?
+  author        User?     @relation(fields: [authorId], references: [id])
+  authorName    String?
+  isPublished   Boolean   @default(false)
+  isFeatured    Boolean   @default(false)
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([authorId])
+  @@index([isPublished])
+  @@map("blogs")
+}
+
+model Subscriber {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  source    String   @default("public-subscribe")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subscribers")
+}
