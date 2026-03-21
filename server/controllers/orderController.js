@@ -25,36 +25,65 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ message: 'Guest details are required for guest checkout' });
     }
 
+    // Validate stock availability before creating
+    for (const item of normalizedItems) {
+      if (item.product) {
+        const product = await prisma.product.findUnique({ where: { id: item.product } });
+        if (!product) continue;
+        const qty = item.quantity || item.qty || 1;
+        if (product.stockQuantity < qty) {
+          return res.status(400).json({
+            message: `Insufficient stock for "${product.name}". Available: ${product.stockQuantity}, requested: ${qty}`,
+          });
+        }
+      }
+    }
+
     const method = paymentInfo?.paymentMethod || 'COD';
     const pStatus = paymentInfo?.paymentStatus || 'Pending';
     const isPaid = pStatus === 'Paid';
 
-    const order = await prisma.order.create({
-      data: {
-        userId: req.user?.id || null,
-        guestEmail: guestEmail?.toLowerCase().trim(),
-        guestPhone: guestPhone?.trim(),
-        guestName: guestName?.trim(),
-        totalPrice,
-        shippingAddress: shippingAddress || null,
-        razorpayOrderId: paymentInfo?.razorpayOrderId,
-        paymentMethod: method,
-        paymentStatus: pStatus,
-        isPaid,
-        paidAt: isPaid ? new Date() : null,
-        status: 'pending',
-        fulfillmentStatus: 'Processing',
-        items: {
-          create: normalizedItems.map((item) => ({
-            productId: item.product || null,
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity || item.qty || 1,
-            image: item.image || null,
-          })),
+    // Use transaction for atomicity: create order + decrement stock
+    const order = await prisma.$transaction(async (tx) => {
+      const created = await tx.order.create({
+        data: {
+          userId: req.user?.id || null,
+          guestEmail: guestEmail?.toLowerCase().trim(),
+          guestPhone: guestPhone?.trim(),
+          guestName: guestName?.trim(),
+          totalPrice,
+          shippingAddress: shippingAddress || null,
+          razorpayOrderId: paymentInfo?.razorpayOrderId,
+          paymentMethod: method,
+          paymentStatus: pStatus,
+          isPaid,
+          paidAt: isPaid ? new Date() : null,
+          status: 'pending',
+          fulfillmentStatus: 'Processing',
+          items: {
+            create: normalizedItems.map((item) => ({
+              productId: item.product || null,
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity || item.qty || 1,
+              image: item.image || null,
+            })),
+          },
         },
-      },
-      include: { items: true, user: { select: { id: true, name: true, email: true, phone: true } } },
+        include: { items: true, user: { select: { id: true, name: true, email: true, phone: true } } },
+      });
+
+      // Decrement stock for each item that has a productId
+      for (const item of created.items) {
+        if (item.productId) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stockQuantity: { decrement: item.quantity } },
+          });
+        }
+      }
+
+      return created;
     });
 
     res.status(201).json(serializeOrder(order));
@@ -92,7 +121,8 @@ export const getOrderById = async (req, res) => {
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
     const isOwner = order.userId && order.userId === req.user.id;
-    if (!req.user.isAdmin && !isOwner) {
+    const hasAdminRole = req.user.role === 'admin' || req.user.role === 'super-admin';
+    if (!hasAdminRole && !req.user.isAdmin && !isOwner) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -119,7 +149,7 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
-// PUT /api/orders/:id/status  (admin)
+// PUT /api/orders/:id/status  (admin — both admin + super-admin)
 export const updateOrderStatus = async (req, res) => {
   try {
     const { status, fulfillmentStatus } = req.body;
@@ -147,6 +177,78 @@ export const updateOrderStatus = async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
     res.status(400).json({ message: error.message });
+  }
+};
+
+// PUT /api/orders/:id/payment  (super-admin only)
+export const updateOrderPayment = async (req, res) => {
+  try {
+    const { paymentStatus, paymentMethod, isPaid } = req.body;
+    const data = {};
+
+    if (paymentStatus) data.paymentStatus = paymentStatus;
+    if (paymentMethod) data.paymentMethod = paymentMethod;
+    if (typeof isPaid === 'boolean') {
+      data.isPaid = isPaid;
+      data.paidAt = isPaid ? new Date() : null;
+    }
+
+    const order = await prisma.order.update({
+      where: { id: req.params.id },
+      data,
+      include: {
+        items: true,
+        user: { select: { id: true, name: true, email: true, phone: true } },
+      },
+    });
+
+    res.json(serializeOrder(order));
+  } catch (error) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// DELETE /api/orders/:id  (super-admin only — cancel order + restore stock)
+export const cancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = await prisma.order.findUnique({
+      where: { id },
+      include: { items: true },
+    });
+
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+
+    if (order.fulfillmentStatus === 'Cancelled') {
+      return res.status(400).json({ message: 'Order is already cancelled' });
+    }
+
+    // Restore stock + update status in a transaction
+    await prisma.$transaction(async (tx) => {
+      for (const item of order.items) {
+        if (item.productId) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stockQuantity: { increment: item.quantity } },
+          });
+        }
+      }
+
+      await tx.order.update({
+        where: { id },
+        data: {
+          fulfillmentStatus: 'Cancelled',
+          status: 'cancelled',
+        },
+      });
+    });
+
+    res.json({ message: 'Order cancelled and stock restored' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -203,7 +305,7 @@ export const trackOrder = async (req, res) => {
   }
 };
 
-// PUT /api/orders/:id/shiprocket  (admin)
+// PUT /api/orders/:id/shiprocket  (super-admin only)
 export const appendShiprocketData = async (req, res) => {
   try {
     const { shiprocketOrderId, shipmentId, awbCode, courierName } = req.body;

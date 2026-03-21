@@ -58,8 +58,11 @@ export const fulfillmentToStatus = (fulfillment) => {
     Processing: 'processing',
     Packed: 'processing',
     Shipped: 'shipped',
+    'Out for Delivery': 'shipped',
     Delivered: 'delivered',
     Cancelled: 'cancelled',
+    Stuck: 'processing',
+    Failed: 'cancelled',
   };
   return map[fulfillment] || 'pending';
 };

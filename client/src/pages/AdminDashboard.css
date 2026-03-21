@@ -5,9 +5,65 @@
 }
 
 .admin-header {
-  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
+.admin-header h1 {
+  margin: 0;
+}
+
+.admin-role-chip {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--sage-green, #6b8f71);
+  color: #fff;
+}
+
+/* ─── Stats Row ──────────────────────────────────────────── */
+.stats-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  overflow-x: auto;
+}
+
+.stat-card {
+  flex: 1;
+  min-width: 120px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-top: 3px solid #6b8f71;
+  border-radius: 8px;
+  padding: 1.2rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+}
+
+/* ─── Tabs ───────────────────────────────────────────────── */
 .admin-tabs {
   display: flex;
   gap: 0.5rem;
@@ -29,11 +85,12 @@
 }
 
 .admin-tab.active {
-  border-bottom-color: var(--primary);
+  border-bottom-color: var(--sage-green, #6b8f71);
   color: var(--text);
   font-weight: 600;
 }
 
+/* ─── Panel ──────────────────────────────────────────────── */
 .admin-panel-content {
   background: #fff;
   border: 1px solid var(--border);
@@ -42,7 +99,31 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
-/* Data Table */
+.admin-error {
+  color: #dc3545;
+  margin-bottom: 1rem;
+}
+
+.admin-loading {
+  color: var(--text-light);
+}
+
+/* ─── Role Notice ────────────────────────────────────────── */
+.role-notice {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 6px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: #856404;
+}
+
+.role-notice span {
+  font-weight: 600;
+}
+
+/* ─── Data Table ─────────────────────────────────────────── */
 .admin-table-container {
   overflow-x: auto;
 }
@@ -78,9 +159,20 @@
   background-color: #fcfaf8;
 }
 
+.row-inactive {
+  opacity: 0.55;
+  background-color: #fafafa;
+}
+
 .mono-cell {
   font-size: 0.82rem;
   font-family: monospace;
+}
+
+.clickable {
+  cursor: pointer;
+  color: var(--sage-green, #6b8f71);
+  text-decoration: underline;
 }
 
 .empty-cell {
@@ -93,6 +185,36 @@
   color: #bbb;
 }
 
+.text-danger {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.table-thumb {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+/* ─── Dots ───────────────────────────────────────────────── */
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot-green {
+  background: #28a745;
+}
+
+.dot-red {
+  background: #dc3545;
+}
+
+/* ─── Action Cell ────────────────────────────────────────── */
 .action-cell {
   display: flex;
   gap: 0.4rem;
@@ -100,7 +222,7 @@
   flex-wrap: wrap;
 }
 
-/* Status Badges */
+/* ─── Status Badges ──────────────────────────────────────── */
 .status-badge {
   display: inline-block;
   padding: 0.25rem 0.5rem;
@@ -120,7 +242,8 @@
   background: #e2e3f1;
   color: #3b3d8e;
 }
-.status-shipped {
+.status-shipped,
+.status-out-for-delivery {
   background: #d1ecf1;
   color: #0c5460;
 }
@@ -128,12 +251,42 @@
   background: #d4edda;
   color: #155724;
 }
-.status-cancelled {
+.status-cancelled,
+.status-failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+.status-stuck {
+  background: #ffe0cc;
+  color: #c35600;
+}
+
+/* ─── Payment Badge ──────────────────────────────────────── */
+.pay-badge {
+  display: inline-block;
+  padding: 0.2rem 0.45rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.pay-paid {
+  background: #d4edda;
+  color: #155724;
+}
+.pay-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+.pay-refunded {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+.pay-failed {
   background: #f8d7da;
   color: #721c24;
 }
 
-/* Buttons & Inputs */
+/* ─── Buttons & Inputs ───────────────────────────────────── */
 .stock-input {
   width: 80px;
   padding: 0.5rem;
@@ -142,7 +295,7 @@
 }
 
 .action-btn {
-  background: var(--primary);
+  background: var(--sage-green, #6b8f71);
   color: white;
   border: none;
   padding: 0.5rem 1rem;
@@ -150,9 +303,10 @@
   cursor: pointer;
   font-size: 0.85rem;
   font-weight: 500;
+  transition: opacity 0.2s;
 }
 .action-btn:hover {
-  background: var(--primary-hover);
+  opacity: 0.85;
 }
 
 .action-btn-sm {
@@ -165,6 +319,23 @@
 }
 .action-btn-danger:hover {
   background: #c82333;
+  opacity: 1;
+}
+
+.action-btn-success {
+  background: #28a745;
+}
+.action-btn-success:hover {
+  background: #218838;
+  opacity: 1;
+}
+
+.action-btn-pay {
+  background: #6f42c1;
+}
+.action-btn-pay:hover {
+  background: #5a32a3;
+  opacity: 1;
 }
 
 .btn-secondary {
@@ -219,6 +390,23 @@
   font-size: 1.3rem;
 }
 
+.modal-error {
+  color: #dc3545;
+  font-size: 0.88rem;
+  margin-bottom: 0.75rem;
+  padding: 0.4rem 0.6rem;
+  background: #f8d7da;
+  border-radius: 4px;
+}
+
+.modal-img-preview {
+  max-width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
 .modal-form {
   display: flex;
   flex-direction: column;
@@ -261,6 +449,28 @@
   margin-top: 0.5rem;
 }
 
+/* ─── Order Detail Modal ─────────────────────────────────── */
+.order-detail-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.od-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.3rem 0;
+  border-bottom: 1px dashed #eee;
+  font-size: 0.9rem;
+}
+
+.od-row strong {
+  color: var(--text-light);
+  font-weight: 500;
+  min-width: 100px;
+}
+
 /* ─── Responsive ─────────────────────────────────────────── */
 @media (max-width: 768px) {
   .admin-tabs {
@@ -277,5 +487,16 @@
   .admin-table td {
     padding: 0.6rem 0.5rem;
     font-size: 0.82rem;
+  }
+  .stats-row {
+    flex-wrap: wrap;
+  }
+  .stat-card {
+    min-width: 90px;
+  }
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 }

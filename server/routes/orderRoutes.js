@@ -5,10 +5,12 @@ import {
   getOrderById,
   getAllOrders,
   updateOrderStatus,
+  updateOrderPayment,
+  cancelOrder,
   trackOrder,
   appendShiprocketData,
 } from '../controllers/orderController.js';
-import { protect, isAdmin, optionalProtect } from '../middleware/auth.js';
+import { protect, isAdmin, isSuperAdmin, optionalProtect } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -18,6 +20,8 @@ router.get('/mine', protect, getMyOrders);
 router.get('/track/:orderId', trackOrder);
 router.route('/:id').get(protect, getOrderById);
 router.put('/:id/status', protect, isAdmin, updateOrderStatus);
-router.put('/:id/shiprocket', protect, isAdmin, appendShiprocketData);
+router.put('/:id/payment', protect, isSuperAdmin, updateOrderPayment);
+router.put('/:id/shiprocket', protect, isSuperAdmin, appendShiprocketData);
+router.delete('/:id', protect, isSuperAdmin, cancelOrder);
 
 export default router;

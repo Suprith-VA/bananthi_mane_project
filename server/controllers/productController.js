@@ -53,6 +53,7 @@ export const createProduct = async (req, res) => {
       stock,
       stockQuantity,
       isActive,
+      isBestseller,
       slug,
     } = req.body;
 
@@ -60,6 +61,9 @@ export const createProduct = async (req, res) => {
     const resolvedTitle = title || name;
     if (!resolvedName) return res.status(400).json({ message: 'Product name/title is required' });
     if (price == null) return res.status(400).json({ message: 'Price is required' });
+    if (!image && (!images || images.length === 0)) {
+      return res.status(400).json({ message: 'At least one product image is required' });
+    }
 
     const resolvedSlug = slug || toSlug(resolvedTitle);
     const resolvedStock = stockQuantity ?? stock ?? 100;
@@ -78,6 +82,7 @@ export const createProduct = async (req, res) => {
         category: category || 'General',
         stockQuantity: resolvedStock,
         isActive: isActive ?? true,
+        isBestseller: isBestseller ?? false,
       },
     });
 

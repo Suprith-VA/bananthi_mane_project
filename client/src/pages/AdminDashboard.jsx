@@ -5,18 +5,21 @@ import './AdminDashboard.css';
 const API = '';
 
 function useAdminFetch(token) {
-  const authHeaders = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
-
   const get = useCallback(async (url) => {
-    const res = await fetch(`${API}${url}`, { headers: authHeaders });
-    if (!res.ok) throw new Error(`Failed to fetch ${url}`);
+    const res = await fetch(`${API}${url}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Failed to fetch ${url}`);
+    }
     return res.json();
   }, [token]);
 
   const mutate = useCallback(async (url, method, body) => {
     const res = await fetch(`${API}${url}`, {
       method,
-      headers: authHeaders,
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: body ? JSON.stringify(body) : undefined,
     });
     if (!res.ok) {
@@ -29,9 +32,15 @@ function useAdminFetch(token) {
   return { get, mutate };
 }
 
-// ─── Product Modal ──────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════
+   Modals
+   ══════════════════════════════════════════════════════════════ */
+
 function ProductModal({ product, onClose, onSave }) {
-  const blank = { title: '', price: '', description: '', category: 'General', stockQuantity: 100, image: '', isActive: true, isBestseller: false };
+  const blank = {
+    title: '', price: '', description: '', category: 'General',
+    stockQuantity: 100, image: '', isActive: true, isBestseller: false,
+  };
   const [form, setForm] = useState(product ? {
     title: product.title || product.name || '',
     price: product.price || '',
@@ -42,9 +51,12 @@ function ProductModal({ product, onClose, onSave }) {
     isActive: product.isActive ?? true,
     isBestseller: product.isBestseller ?? false,
   } : blank);
+  const [err, setErr] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!form.image.trim()) { setErr('Image URL is required'); return; }
+    setErr('');
     onSave({ ...form, price: Number(form.price), stockQuantity: Number(form.stockQuantity) });
   };
 
@@ -52,12 +64,14 @@ function ProductModal({ product, onClose, onSave }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <h2>{product ? 'Edit Product' : 'New Product'}</h2>
+        {err && <p className="modal-error">{err}</p>}
         <form onSubmit={handleSubmit} className="modal-form">
           <label>Title *<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
-          <label>Price (Rs.) *<input required type="number" min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} /></label>
+          <label>Price (₹) *<input required type="number" min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} /></label>
           <label>Category<input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label>
           <label>Stock Quantity<input type="number" min="0" value={form.stockQuantity} onChange={(e) => setForm({ ...form, stockQuantity: e.target.value })} /></label>
-          <label>Image URL<input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} /></label>
+          <label>Image URL *<input required value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} /></label>
+          {form.image && <img src={form.image} alt="preview" className="modal-img-preview" onError={(e) => { e.target.style.display = 'none'; }} />}
           <label>Description<textarea rows="3" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
           <label className="checkbox-label"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>
           <label className="checkbox-label"><input type="checkbox" checked={form.isBestseller} onChange={(e) => setForm({ ...form, isBestseller: e.target.checked })} /> Show in Bestsellers (Home Page)</label>
@@ -71,7 +85,6 @@ function ProductModal({ product, onClose, onSave }) {
   );
 }
 
-// ─── Blog Modal ─────────────────────────────────────────────
 function BlogModal({ blog, onClose, onSave }) {
   const [form, setForm] = useState(blog ? {
     title: blog.title || '',
@@ -93,6 +106,7 @@ function BlogModal({ blog, onClose, onSave }) {
         <form onSubmit={handleSubmit} className="modal-form">
           <label>Title *<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
           <label>Featured Image URL<input value={form.featuredImage} onChange={(e) => setForm({ ...form, featuredImage: e.target.value })} /></label>
+          {form.featuredImage && <img src={form.featuredImage} alt="preview" className="modal-img-preview" onError={(e) => { e.target.style.display = 'none'; }} />}
           <label>Content *<textarea required rows="10" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label>
           <label className="checkbox-label"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label>
           <label className="checkbox-label"><input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} /> Feature on Home Page</label>
@@ -106,7 +120,6 @@ function BlogModal({ blog, onClose, onSave }) {
   );
 }
 
-// ─── Shiprocket Modal ───────────────────────────────────────
 function ShiprocketModal({ order, onClose, onSave }) {
   const [form, setForm] = useState({
     shiprocketOrderId: order.shiprocketOrderId || '',
@@ -139,11 +152,123 @@ function ShiprocketModal({ order, onClose, onSave }) {
   );
 }
 
-// ─── Main Dashboard ─────────────────────────────────────────
+function PaymentModal({ order, onClose, onSave }) {
+  const [form, setForm] = useState({
+    paymentStatus: order.paymentInfo?.paymentStatus || (order.isPaid ? 'Paid' : 'Pending'),
+    paymentMethod: order.paymentInfo?.paymentMethod || 'COD',
+    isPaid: order.isPaid ?? false,
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(form);
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h2>Payment Details</h2>
+        <form onSubmit={handleSubmit} className="modal-form">
+          <label>Payment Status
+            <select value={form.paymentStatus} onChange={(e) => setForm({ ...form, paymentStatus: e.target.value })}>
+              <option value="Pending">Pending</option>
+              <option value="Paid">Paid</option>
+              <option value="Refunded">Refunded</option>
+              <option value="Failed">Failed</option>
+            </select>
+          </label>
+          <label>Payment Method
+            <select value={form.paymentMethod} onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}>
+              <option value="COD">Cash on Delivery</option>
+              <option value="Razorpay">Razorpay</option>
+              <option value="UPI">UPI</option>
+              <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+          </label>
+          <label className="checkbox-label">
+            <input type="checkbox" checked={form.isPaid} onChange={(e) => setForm({ ...form, isPaid: e.target.checked, paymentStatus: e.target.checked ? 'Paid' : 'Pending' })} /> Mark as Paid
+          </label>
+          <div className="modal-actions">
+            <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="action-btn">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function OrderDetailModal({ order, onClose }) {
+  if (!order) return null;
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content modal-wide" onClick={(e) => e.stopPropagation()}>
+        <h2>Order Details</h2>
+        <div className="order-detail-grid">
+          <div className="od-row"><strong>Order ID</strong><span className="mono-cell">{order._id}</span></div>
+          <div className="od-row"><strong>Customer</strong><span>{order.user?.name || order.guestName || 'Guest'}</span></div>
+          <div className="od-row"><strong>Email</strong><span>{order.user?.email || order.guestEmail || '—'}</span></div>
+          <div className="od-row"><strong>Phone</strong><span>{order.user?.phone || order.guestPhone || '—'}</span></div>
+          <div className="od-row"><strong>Date</strong><span>{new Date(order.createdAt).toLocaleString()}</span></div>
+          <div className="od-row"><strong>Status</strong><span className={`status-badge status-${(order.fulfillmentStatus || 'processing').toLowerCase().replace(/ /g, '-')}`}>{order.fulfillmentStatus}</span></div>
+          <div className="od-row"><strong>Payment</strong><span>{order.paymentInfo?.paymentStatus} ({order.paymentInfo?.paymentMethod})</span></div>
+          <div className="od-row"><strong>Total</strong><span>₹{order.totalPrice?.toFixed(2)}</span></div>
+          {order.awbCode && <div className="od-row"><strong>AWB Code</strong><span className="mono-cell">{order.awbCode}</span></div>}
+          {order.courierName && <div className="od-row"><strong>Courier</strong><span>{order.courierName}</span></div>}
+        </div>
+
+        <h3 style={{ margin: '1.2rem 0 0.6rem' }}>Items</h3>
+        <table className="admin-table">
+          <thead><tr><th>Product</th><th>Qty</th><th>Price</th></tr></thead>
+          <tbody>
+            {(order.items || order.orderItems || []).map((item, i) => (
+              <tr key={i}>
+                <td>{item.name}</td>
+                <td>{item.qty || item.quantity}</td>
+                <td>₹{item.price}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {order.shippingAddress && (
+          <>
+            <h3 style={{ margin: '1.2rem 0 0.6rem' }}>Shipping Address</h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-light)' }}>
+              {typeof order.shippingAddress === 'string'
+                ? order.shippingAddress
+                : JSON.stringify(order.shippingAddress, null, 2)}
+            </p>
+          </>
+        )}
+
+        <div className="modal-actions" style={{ marginTop: '1.5rem' }}>
+          <button className="btn-secondary" onClick={onClose}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════
+   Role helpers
+   ══════════════════════════════════════════════════════════════ */
+const ADMIN_FULFILLMENT_OPTIONS = ['Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Stuck', 'Failed', 'Cancelled'];
+const SUPER_ADMIN_FULFILLMENT_OPTIONS = [...ADMIN_FULFILLMENT_OPTIONS];
+
+/* ══════════════════════════════════════════════════════════════
+   Main Dashboard
+   ══════════════════════════════════════════════════════════════ */
 export default function AdminDashboard() {
+  const { userInfo } = useAuth();
+  const token = userInfo?.token;
+  const role = userInfo?.role || 'user';
+  const isSuperAdmin = role === 'super-admin';
+
   const [activeTab, setActiveTab] = useState('orders');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [stats, setStats] = useState(null);
 
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
@@ -153,10 +278,15 @@ export default function AdminDashboard() {
   const [editingProduct, setEditingProduct] = useState(undefined);
   const [editingBlog, setEditingBlog] = useState(undefined);
   const [shiprocketOrder, setShiprocketOrder] = useState(null);
+  const [paymentOrder, setPaymentOrder] = useState(null);
+  const [viewingOrder, setViewingOrder] = useState(null);
 
-  const { userInfo } = useAuth();
-  const token = userInfo?.token;
   const { get, mutate } = useAdminFetch(token);
+
+  /* ── Data fetchers ─────────────────────────────────────── */
+  const fetchStats = useCallback(async () => {
+    try { setStats(await get('/api/admin/stats')); } catch { /* silent */ }
+  }, [get]);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true); setError(null);
@@ -187,13 +317,17 @@ export default function AdminDashboard() {
   }, [get]);
 
   useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  useEffect(() => {
     if (activeTab === 'orders') fetchOrders();
     if (activeTab === 'products') fetchProducts();
     if (activeTab === 'blogs') fetchBlogs();
     if (activeTab === 'users') fetchUsers();
   }, [activeTab]);
 
-  // ─── Order actions ──────────────────────────────────────
+  /* ── Order actions ─────────────────────────────────────── */
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
     try {
       await mutate(`/api/orders/${orderId}/status`, 'PUT', { fulfillmentStatus: newStatus });
@@ -209,7 +343,23 @@ export default function AdminDashboard() {
     } catch (err) { alert(err.message); }
   };
 
-  // ─── Product actions ────────────────────────────────────
+  const handleSavePayment = async (data) => {
+    try {
+      await mutate(`/api/orders/${paymentOrder._id}/payment`, 'PUT', data);
+      setPaymentOrder(null);
+      fetchOrders();
+    } catch (err) { alert(err.message); }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!confirm('Cancel this order? Stock will be restored.')) return;
+    try {
+      await mutate(`/api/orders/${orderId}`, 'DELETE');
+      fetchOrders();
+    } catch (err) { alert(err.message); }
+  };
+
+  /* ── Product actions (super-admin only) ────────────────── */
   const handleSaveProduct = async (data) => {
     try {
       if (editingProduct?._id) {
@@ -230,7 +380,14 @@ export default function AdminDashboard() {
     } catch (err) { alert(err.message); }
   };
 
-  // ─── Blog actions ───────────────────────────────────────
+  const handleReactivateProduct = async (id) => {
+    try {
+      await mutate(`/api/products/${id}`, 'PUT', { isActive: true });
+      fetchProducts();
+    } catch (err) { alert(err.message); }
+  };
+
+  /* ── Blog actions (admin + super-admin) ────────────────── */
   const handleSaveBlog = async (data) => {
     try {
       if (editingBlog?._id) {
@@ -251,7 +408,7 @@ export default function AdminDashboard() {
     } catch (err) { alert(err.message); }
   };
 
-  // ─── User actions ───────────────────────────────────────
+  /* ── User actions (super-admin only) ───────────────────── */
   const handleUpdateUserRole = async (userId, newRole) => {
     try {
       await mutate(`/api/admin/users/${userId}`, 'PUT', { role: newRole });
@@ -267,94 +424,151 @@ export default function AdminDashboard() {
     } catch (err) { alert(err.message); }
   };
 
-  // ─── Renderers ──────────────────────────────────────────
-  const renderOrdersTable = () => (
-    <div className="admin-table-container">
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>Order ID</th>
-            <th>Customer</th>
-            <th>Date</th>
-            <th>Total (Rs.)</th>
-            <th>Payment</th>
-            <th>AWB Code</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {orders.map(o => (
-            <tr key={o._id}>
-              <td className="mono-cell">{o._id?.slice(0, 8)}...</td>
-              <td>{o.user?.name || o.guestName || 'Guest'}</td>
-              <td>{new Date(o.createdAt).toLocaleDateString()}</td>
-              <td>{o.totalPrice?.toFixed(2)}</td>
-              <td>{o.paymentInfo?.paymentStatus || (o.isPaid ? 'Paid' : 'Pending')}</td>
-              <td>{o.awbCode || <span className="text-muted">—</span>}</td>
-              <td>
-                <span className={`status-badge status-${(o.fulfillmentStatus || 'processing').toLowerCase()}`}>
-                  {o.fulfillmentStatus || 'Processing'}
-                </span>
-              </td>
-              <td className="action-cell">
-                <select
-                  className="action-select"
-                  value={o.fulfillmentStatus || 'Processing'}
-                  onChange={e => handleUpdateOrderStatus(o._id, e.target.value)}
-                >
-                  <option value="Processing">Processing</option>
-                  <option value="Packed">Packed</option>
-                  <option value="Shipped">Shipped</option>
-                  <option value="Delivered">Delivered</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
-                <button className="action-btn action-btn-sm" onClick={() => setShiprocketOrder(o)} title="Edit tracking details">Tracking</button>
-              </td>
+  /* ── Tab config based on role ──────────────────────────── */
+  const tabs = [
+    { key: 'orders', label: 'Orders' },
+    { key: 'products', label: 'Products' },
+    { key: 'blogs', label: 'Blogs' },
+    ...(isSuperAdmin ? [{ key: 'users', label: 'Users' }] : []),
+  ];
+
+  /* ══════════════════════════════════════════════════════════
+     Table Renderers
+     ══════════════════════════════════════════════════════════ */
+
+  const renderStats = () => {
+    if (!stats) return null;
+    const cards = [
+      { label: 'Orders', value: stats.orders, color: '#0c5460' },
+      { label: 'Products', value: stats.products, color: '#155724' },
+      { label: 'Blogs', value: stats.blogs, color: '#856404' },
+      { label: 'Users', value: stats.users, color: '#3b3d8e' },
+      { label: 'Subscribers', value: stats.subscribers, color: '#6b4226' },
+    ];
+    return (
+      <div className="stats-row">
+        {cards.map((c) => (
+          <div key={c.label} className="stat-card" style={{ borderTopColor: c.color }}>
+            <span className="stat-value">{c.value}</span>
+            <span className="stat-label">{c.label}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderOrdersTable = () => {
+    const statusOptions = isSuperAdmin ? SUPER_ADMIN_FULFILLMENT_OPTIONS : ADMIN_FULFILLMENT_OPTIONS;
+    return (
+      <div className="admin-table-container">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Total</th>
+              <th>Payment</th>
+              <th>AWB</th>
+              <th>Status</th>
+              <th>Actions</th>
             </tr>
-          ))}
-          {orders.length === 0 && !loading && (
-            <tr><td colSpan="8" className="empty-cell">No orders found.</td></tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
+          </thead>
+          <tbody>
+            {orders.map(o => {
+              const fs = (o.fulfillmentStatus || 'Processing').toLowerCase().replace(/ /g, '-');
+              return (
+                <tr key={o._id}>
+                  <td className="mono-cell clickable" onClick={() => setViewingOrder(o)}>{o._id?.slice(0, 8)}...</td>
+                  <td>{o.user?.name || o.guestName || 'Guest'}</td>
+                  <td>{new Date(o.createdAt).toLocaleDateString()}</td>
+                  <td>₹{o.totalPrice?.toFixed(2)}</td>
+                  <td>
+                    <span className={`pay-badge pay-${(o.paymentInfo?.paymentStatus || 'Pending').toLowerCase()}`}>
+                      {o.paymentInfo?.paymentStatus || (o.isPaid ? 'Paid' : 'Pending')}
+                    </span>
+                  </td>
+                  <td>{o.awbCode || <span className="text-muted">—</span>}</td>
+                  <td><span className={`status-badge status-${fs}`}>{o.fulfillmentStatus || 'Processing'}</span></td>
+                  <td className="action-cell">
+                    <select
+                      className="action-select"
+                      value={o.fulfillmentStatus || 'Processing'}
+                      onChange={e => handleUpdateOrderStatus(o._id, e.target.value)}
+                    >
+                      {statusOptions.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    {isSuperAdmin && (
+                      <>
+                        <button className="action-btn action-btn-sm" onClick={() => setShiprocketOrder(o)} title="Edit tracking">Track</button>
+                        <button className="action-btn action-btn-sm action-btn-pay" onClick={() => setPaymentOrder(o)} title="Edit payment">Pay</button>
+                        {o.fulfillmentStatus !== 'Cancelled' && (
+                          <button className="action-btn action-btn-sm action-btn-danger" onClick={() => handleCancelOrder(o._id)} title="Cancel order">Cancel</button>
+                        )}
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+            {orders.length === 0 && !loading && (
+              <tr><td colSpan="8" className="empty-cell">No orders found.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   const renderProductsTable = () => (
     <div className="admin-table-container">
-      <div className="table-header-actions">
-        <button className="action-btn" onClick={() => setEditingProduct(null)}>+ New Product</button>
-      </div>
+      {isSuperAdmin && (
+        <div className="table-header-actions">
+          <button className="action-btn" onClick={() => setEditingProduct(null)}>+ New Product</button>
+        </div>
+      )}
+      {!isSuperAdmin && (
+        <div className="role-notice">
+          <span>Read-only access</span> — Product management requires Super Admin privileges.
+        </div>
+      )}
       <table className="admin-table">
         <thead>
           <tr>
+            <th>Image</th>
             <th>Name</th>
             <th>Price</th>
             <th>Category</th>
             <th>Stock</th>
             <th>Active</th>
-            <th>Home</th>
-            <th>Actions</th>
+            <th>Bestseller</th>
+            {isSuperAdmin && <th>Actions</th>}
           </tr>
         </thead>
         <tbody>
           {products.map(p => (
-            <tr key={p._id}>
+            <tr key={p._id} className={!p.isActive ? 'row-inactive' : ''}>
+              <td><img src={p.image} alt="" className="table-thumb" onError={(e) => { e.target.src = '/images/main.png'; }} /></td>
               <td>{p.title || p.name}</td>
               <td>₹{p.price}</td>
-                <td>{p.category}</td>
-                <td>{p.stockQuantity ?? p.stock}</td>
-                <td>{p.isActive ? '✓' : '—'}</td>
-                <td>{p.isBestseller ? '⭐' : '—'}</td>
+              <td>{p.category}</td>
+              <td className={p.stockQuantity === 0 ? 'text-danger' : ''}>{p.stockQuantity ?? p.stock}</td>
+              <td>{p.isActive ? <span className="dot dot-green" /> : <span className="dot dot-red" />}</td>
+              <td>{p.isBestseller ? '⭐' : '—'}</td>
+              {isSuperAdmin && (
                 <td className="action-cell">
-                <button className="action-btn action-btn-sm" onClick={() => setEditingProduct(p)}>Edit</button>
-                {p.isActive && <button className="action-btn action-btn-sm action-btn-danger" onClick={() => handleDeleteProduct(p._id)}>Deactivate</button>}
-              </td>
+                  <button className="action-btn action-btn-sm" onClick={() => setEditingProduct(p)}>Edit</button>
+                  {p.isActive ? (
+                    <button className="action-btn action-btn-sm action-btn-danger" onClick={() => handleDeleteProduct(p._id)}>Deactivate</button>
+                  ) : (
+                    <button className="action-btn action-btn-sm action-btn-success" onClick={() => handleReactivateProduct(p._id)}>Reactivate</button>
+                  )}
+                </td>
+              )}
             </tr>
           ))}
           {products.length === 0 && !loading && (
-            <tr><td colSpan="7" className="empty-cell">No products found.</td></tr>
+            <tr><td colSpan={isSuperAdmin ? 8 : 7} className="empty-cell">No products found.</td></tr>
           )}
         </tbody>
       </table>
@@ -388,7 +602,7 @@ export default function AdminDashboard() {
                 </span>
               </td>
               <td>{b.isFeatured ? '⭐' : '—'}</td>
-              <td>{new Date(b.createdAt).toLocaleDateString()}</td>
+              <td>{new Date(b.publishedAt || b.createdAt).toLocaleDateString()}</td>
               <td className="action-cell">
                 <button className="action-btn action-btn-sm" onClick={() => setEditingBlog(b)}>Edit</button>
                 <button className="action-btn action-btn-sm action-btn-danger" onClick={() => handleDeleteBlog(b._id)}>Delete</button>
@@ -396,7 +610,7 @@ export default function AdminDashboard() {
             </tr>
           ))}
           {blogs.length === 0 && !loading && (
-            <tr><td colSpan="5" className="empty-cell">No blog posts found.</td></tr>
+            <tr><td colSpan="6" className="empty-cell">No blog posts found.</td></tr>
           )}
         </tbody>
       </table>
@@ -452,7 +666,8 @@ export default function AdminDashboard() {
     </div>
   );
 
-  if (!token) {
+  /* ── Guard ─────────────────────────────────────────────── */
+  if (!token || (role !== 'admin' && role !== 'super-admin' && !userInfo?.isAdmin)) {
     return (
       <main className="admin-dashboard page-enter">
         <h1 style={{ color: 'red' }}>Access Denied. You must be an administrator.</h1>
@@ -460,20 +675,18 @@ export default function AdminDashboard() {
     );
   }
 
+  /* ── Render ────────────────────────────────────────────── */
   return (
     <main className="admin-dashboard page-enter">
       <div className="admin-header">
         <h1>Admin Dashboard</h1>
-        <p>Manage orders, inventory, content, and users.</p>
+        <p className="admin-role-chip">{isSuperAdmin ? 'Super Admin' : 'Admin'}</p>
       </div>
 
+      {renderStats()}
+
       <div className="admin-tabs">
-        {[
-          { key: 'orders', label: 'Orders & Fulfillment' },
-          { key: 'products', label: 'Product Management' },
-          { key: 'blogs', label: 'Blog Management' },
-          { key: 'users', label: 'User Management' },
-        ].map(({ key, label }) => (
+        {tabs.map(({ key, label }) => (
           <button
             key={key}
             className={`admin-tab ${activeTab === key ? 'active' : ''}`}
@@ -485,39 +698,35 @@ export default function AdminDashboard() {
       </div>
 
       <div className="admin-panel-content">
-        {error && <p style={{ color: 'red' }}>Error: {error}</p>}
-        {loading && !error ? <p>Loading data...</p> : (
+        {error && <p className="admin-error">Error: {error}</p>}
+        {loading && !error ? <p className="admin-loading">Loading data...</p> : (
           <>
             {activeTab === 'orders' && renderOrdersTable()}
             {activeTab === 'products' && renderProductsTable()}
             {activeTab === 'blogs' && renderBlogsTable()}
-            {activeTab === 'users' && renderUsersTable()}
+            {activeTab === 'users' && isSuperAdmin && renderUsersTable()}
           </>
         )}
       </div>
 
-      {editingProduct !== undefined && (
-        <ProductModal
-          product={editingProduct}
-          onClose={() => setEditingProduct(undefined)}
-          onSave={handleSaveProduct}
-        />
+      {editingProduct !== undefined && isSuperAdmin && (
+        <ProductModal product={editingProduct} onClose={() => setEditingProduct(undefined)} onSave={handleSaveProduct} />
       )}
 
       {editingBlog !== undefined && (
-        <BlogModal
-          blog={editingBlog}
-          onClose={() => setEditingBlog(undefined)}
-          onSave={handleSaveBlog}
-        />
+        <BlogModal blog={editingBlog} onClose={() => setEditingBlog(undefined)} onSave={handleSaveBlog} />
       )}
 
-      {shiprocketOrder && (
-        <ShiprocketModal
-          order={shiprocketOrder}
-          onClose={() => setShiprocketOrder(null)}
-          onSave={handleSaveShiprocket}
-        />
+      {shiprocketOrder && isSuperAdmin && (
+        <ShiprocketModal order={shiprocketOrder} onClose={() => setShiprocketOrder(null)} onSave={handleSaveShiprocket} />
+      )}
+
+      {paymentOrder && isSuperAdmin && (
+        <PaymentModal order={paymentOrder} onClose={() => setPaymentOrder(null)} onSave={handleSavePayment} />
+      )}
+
+      {viewingOrder && (
+        <OrderDetailModal order={viewingOrder} onClose={() => setViewingOrder(null)} />
       )}
     </main>
   );

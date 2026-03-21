@@ -58,7 +58,7 @@ function UserDropdown({ onAuthOpen }) {
       <button className="user-trigger" onClick={() => setOpen(o => !o)}>
         <span className="user-avatar">{firstName[0].toUpperCase()}</span>
         <span className="user-trigger-name">{firstName}</span>
-        {isAdmin && <span className="admin-pill">Admin</span>}
+        {isAdmin && <span className="admin-pill">{userInfo?.role === 'super-admin' ? 'Super Admin' : 'Admin'}</span>}
         <svg className="chevron" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5">
           <polyline points="6 9 12 15 18 9" />
         </svg>
