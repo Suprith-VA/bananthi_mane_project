@@ -304,6 +304,34 @@
   margin: 0;
 }
 
+/* Status notice (Stuck / Failed / Out for Delivery) */
+.track-status-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.track-status-notice.notice-warn {
+  background: #fff3cd;
+  border-left: 4px solid #ffc107;
+  color: #856404;
+}
+
+.track-status-notice.notice-info {
+  background: #d1ecf1;
+  border-left: 4px solid #17a2b8;
+  color: #0c5460;
+}
+
+.track-status-notice p {
+  margin: 0;
+}
+
 /* Cancelled */
 .track-cancelled {
   text-align: center;

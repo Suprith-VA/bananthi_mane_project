@@ -53,20 +53,28 @@ export const createBlog = async (req, res) => {
 
     const resolvedSlug = slug || toSlug(title);
     const published = isPublished ?? false;
+    const makeFeatured = req.body.isFeatured ?? false;
 
-    const blog = await prisma.blog.create({
-      data: {
-        title,
-        slug: resolvedSlug,
-        content,
-        featuredImage: featuredImage || '',
-        authorId: req.user?.id || null,
-        authorName: authorName || req.user?.name || null,
-        isPublished: published,
-        isFeatured: req.body.isFeatured ?? false,
-        publishedAt: published ? new Date() : null,
-      },
-      include: { author: { select: { id: true, name: true, email: true } } },
+    const blog = await prisma.$transaction(async (tx) => {
+      // Enforce one-at-a-time: unmark all others if this blog should be featured
+      if (makeFeatured) {
+        await tx.blog.updateMany({ where: { isFeatured: true }, data: { isFeatured: false } });
+      }
+
+      return tx.blog.create({
+        data: {
+          title,
+          slug: resolvedSlug,
+          content,
+          featuredImage: featuredImage || '',
+          authorId: req.user?.id || null,
+          authorName: authorName || req.user?.name || null,
+          isPublished: published,
+          isFeatured: makeFeatured,
+          publishedAt: published ? new Date() : null,
+        },
+        include: { author: { select: { id: true, name: true, email: true } } },
+      });
     });
 
     res.status(201).json(serializeBlog(blog));
@@ -104,10 +112,20 @@ export const updateBlog = async (req, res) => {
       data.publishedAt = null;
     }
 
-    const blog = await prisma.blog.update({
-      where: { id },
-      data,
-      include: { author: { select: { id: true, name: true, email: true } } },
+    const blog = await prisma.$transaction(async (tx) => {
+      // Enforce one-at-a-time featured: unmark all others before marking this one
+      if (data.isFeatured === true) {
+        await tx.blog.updateMany({
+          where: { isFeatured: true, NOT: { id } },
+          data: { isFeatured: false },
+        });
+      }
+
+      return tx.blog.update({
+        where: { id },
+        data,
+        include: { author: { select: { id: true, name: true, email: true } } },
+      });
     });
 
     res.json(serializeBlog(blog));

@@ -2,10 +2,19 @@ import { useState, useEffect, useMemo } from 'react';
 import ProductCard from '../components/products/ProductCard';
 import './Products.css';
 
+const CATEGORIES = [
+  { key: 'all', label: 'All Products' },
+  { key: 'Cold Pressed Oil', label: 'Cold Pressed Oil' },
+  { key: 'Organic Powders', label: 'Organic Powders' },
+  { key: 'Homemade Pudi', label: 'Homemade Pudi' },
+  { key: 'Other', label: 'Other' },
+];
+
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [activeCategory, setActiveCategory] = useState('all');
 
   useEffect(() => {
     fetch('/api/products')
@@ -14,16 +23,33 @@ export default function Products() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Derive which category chips to show (only ones that have products)
+  const availableCategories = useMemo(() => {
+    const cats = new Set(products.map(p => p.category));
+    return CATEGORIES.filter(c => c.key === 'all' || cats.has(c.key));
+  }, [products]);
+
   const filtered = useMemo(() => {
+    let list = products;
+    if (activeCategory !== 'all') {
+      list = list.filter(p => p.category === activeCategory);
+    }
     const q = search.trim().toLowerCase();
-    if (!q) return products;
-    return products.filter(p =>
-      p.name?.toLowerCase().includes(q) ||
-      p.title?.toLowerCase().includes(q) ||
-      p.category?.toLowerCase().includes(q) ||
-      p.description?.toLowerCase().includes(q)
-    );
-  }, [products, search]);
+    if (q) {
+      list = list.filter(p =>
+        p.name?.toLowerCase().includes(q) ||
+        p.title?.toLowerCase().includes(q) ||
+        p.category?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [products, search, activeCategory]);
+
+  const categoryCount = (key) => {
+    if (key === 'all') return products.length;
+    return products.filter(p => p.category === key).length;
+  };
 
   return (
     <main className="page-enter">
@@ -32,6 +58,21 @@ export default function Products() {
         <p>Traditional remedies crafted for postpartum healing.</p>
       </div>
 
+      {/* ── Category Filter ─── */}
+      <div className="category-filter-bar">
+        {availableCategories.map(c => (
+          <button
+            key={c.key}
+            className={`category-chip ${activeCategory === c.key ? 'active' : ''}`}
+            onClick={() => { setActiveCategory(c.key); setSearch(''); }}
+          >
+            {c.label}
+            <span className="category-count">{categoryCount(c.key)}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* ── Search ─── */}
       <div className="products-search-bar">
         <div className="search-input-wrap">
           <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -41,17 +82,17 @@ export default function Products() {
             type="text"
             placeholder="Search products… e.g. oil, powder, ghee"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={e => { setSearch(e.target.value); setActiveCategory('all'); }}
             className="search-input"
           />
           {search && (
             <button className="search-clear" onClick={() => setSearch('')} aria-label="Clear search">×</button>
           )}
         </div>
-        {search && (
+        {(search || activeCategory !== 'all') && (
           <p className="search-results-count">
             {filtered.length === 0
-              ? 'No products match your search.'
+              ? `No products found${search ? ` for "${search}"` : ''}.`
               : `${filtered.length} product${filtered.length !== 1 ? 's' : ''} found`}
           </p>
         )}
@@ -65,7 +106,7 @@ export default function Products() {
             <ProductCard key={p._id || p.id} product={p} />
           ))}
           {filtered.length === 0 && !loading && (
-            <div className="products-empty">No products found for "{search}".</div>
+            <div className="products-empty col-span-all">No products found.</div>
           )}
         </div>
       )}

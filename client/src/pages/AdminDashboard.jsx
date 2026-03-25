@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
+import ImageUploadField from '../components/admin/ImageUploadField';
 import './AdminDashboard.css';
+
+const PRODUCT_CATEGORIES = ['Cold Pressed Oil', 'Organic Powders', 'Homemade Pudi', 'Other'];
 
 const API = '';
 
@@ -36,16 +39,16 @@ function useAdminFetch(token) {
    Modals
    ══════════════════════════════════════════════════════════════ */
 
-function ProductModal({ product, onClose, onSave }) {
+function ProductModal({ product, onClose, onSave, token }) {
   const blank = {
-    title: '', price: '', description: '', category: 'General',
+    title: '', price: '', description: '', category: 'Cold Pressed Oil',
     stockQuantity: 100, image: '', isActive: true, isBestseller: false,
   };
   const [form, setForm] = useState(product ? {
     title: product.title || product.name || '',
     price: product.price || '',
     description: product.description || '',
-    category: product.category || 'General',
+    category: product.category || 'Cold Pressed Oil',
     stockQuantity: product.stockQuantity ?? product.stock ?? 100,
     image: product.image || '',
     isActive: product.isActive ?? true,
@@ -55,7 +58,7 @@ function ProductModal({ product, onClose, onSave }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.image.trim()) { setErr('Image URL is required'); return; }
+    if (!form.image.trim()) { setErr('Image is required — upload a file or paste a URL.'); return; }
     setErr('');
     onSave({ ...form, price: Number(form.price), stockQuantity: Number(form.stockQuantity) });
   };
@@ -68,10 +71,19 @@ function ProductModal({ product, onClose, onSave }) {
         <form onSubmit={handleSubmit} className="modal-form">
           <label>Title *<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
           <label>Price (₹) *<input required type="number" min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} /></label>
-          <label>Category<input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} /></label>
+          <label>Category
+            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
+              {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </label>
           <label>Stock Quantity<input type="number" min="0" value={form.stockQuantity} onChange={(e) => setForm({ ...form, stockQuantity: e.target.value })} /></label>
-          <label>Image URL *<input required value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} /></label>
-          {form.image && <img src={form.image} alt="preview" className="modal-img-preview" onError={(e) => { e.target.style.display = 'none'; }} />}
+          <label>Image *
+            <ImageUploadField
+              value={form.image}
+              onChange={(url) => setForm({ ...form, image: url })}
+              token={token}
+            />
+          </label>
           <label>Description<textarea rows="3" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
           <label className="checkbox-label"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>
           <label className="checkbox-label"><input type="checkbox" checked={form.isBestseller} onChange={(e) => setForm({ ...form, isBestseller: e.target.checked })} /> Show in Bestsellers (Home Page)</label>
@@ -85,7 +97,7 @@ function ProductModal({ product, onClose, onSave }) {
   );
 }
 
-function BlogModal({ blog, onClose, onSave }) {
+function BlogModal({ blog, onClose, onSave, token }) {
   const [form, setForm] = useState(blog ? {
     title: blog.title || '',
     content: blog.content || '',
@@ -105,11 +117,16 @@ function BlogModal({ blog, onClose, onSave }) {
         <h2>{blog ? 'Edit Blog Post' : 'New Blog Post'}</h2>
         <form onSubmit={handleSubmit} className="modal-form">
           <label>Title *<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
-          <label>Featured Image URL<input value={form.featuredImage} onChange={(e) => setForm({ ...form, featuredImage: e.target.value })} /></label>
-          {form.featuredImage && <img src={form.featuredImage} alt="preview" className="modal-img-preview" onError={(e) => { e.target.style.display = 'none'; }} />}
+          <label>Featured Image
+            <ImageUploadField
+              value={form.featuredImage}
+              onChange={(url) => setForm({ ...form, featuredImage: url })}
+              token={token}
+            />
+          </label>
           <label>Content *<textarea required rows="10" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} /></label>
           <label className="checkbox-label"><input type="checkbox" checked={form.isPublished} onChange={(e) => setForm({ ...form, isPublished: e.target.checked })} /> Published</label>
-          <label className="checkbox-label"><input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} /> Feature on Home Page</label>
+          <label className="checkbox-label"><input type="checkbox" checked={form.isFeatured} onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })} /> Feature on Home Page (replaces current featured)</label>
           <div className="modal-actions">
             <button type="button" className="btn-secondary" onClick={onClose}>Cancel</button>
             <button type="submit" className="action-btn">Save</button>
@@ -356,6 +373,8 @@ export default function AdminDashboard() {
     try {
       await mutate(`/api/orders/${orderId}`, 'DELETE');
       fetchOrders();
+      // Silently refresh products so stock count is updated when admin switches to Products tab
+      fetchProducts();
     } catch (err) { alert(err.message); }
   };
 
@@ -710,11 +729,11 @@ export default function AdminDashboard() {
       </div>
 
       {editingProduct !== undefined && isSuperAdmin && (
-        <ProductModal product={editingProduct} onClose={() => setEditingProduct(undefined)} onSave={handleSaveProduct} />
+        <ProductModal product={editingProduct} onClose={() => setEditingProduct(undefined)} onSave={handleSaveProduct} token={token} />
       )}
 
       {editingBlog !== undefined && (
-        <BlogModal blog={editingBlog} onClose={() => setEditingBlog(undefined)} onSave={handleSaveBlog} />
+        <BlogModal blog={editingBlog} onClose={() => setEditingBlog(undefined)} onSave={handleSaveBlog} token={token} />
       )}
 
       {shiprocketOrder && isSuperAdmin && (

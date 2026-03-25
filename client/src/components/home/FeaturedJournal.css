@@ -7,7 +7,10 @@
 
 .fj-image {
   min-height: 280px;
-  background: url('/images/blog_2.png') center/cover no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  /* background-image is set dynamically via inline style */
 }
 
 .fj-content {

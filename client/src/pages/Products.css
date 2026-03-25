@@ -24,6 +24,62 @@
   margin-top: 10px;
 }
 
+/* ─── Category Filter ────────────────────────────────────── */
+.category-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 28px 5% 0;
+  justify-content: center;
+}
+
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 30px;
+  border: 1.5px solid var(--border-color);
+  background: var(--light-cream);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.category-chip:hover {
+  border-color: var(--sage-green);
+  color: var(--sage-green);
+}
+
+.category-chip.active {
+  background: var(--sage-green);
+  border-color: var(--sage-green);
+  color: #fff;
+}
+
+.category-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.3);
+  color: inherit;
+}
+
+.category-chip:not(.active) .category-count {
+  background: rgba(107, 143, 113, 0.12);
+  color: var(--sage-green);
+}
+
 /* ─── Search ─────────────────────────────────────────────── */
 .products-search-bar {
   padding: 28px 5% 0;

@@ -4,16 +4,25 @@ import './TrackOrder.css';
 
 const STEPS = ['Processing', 'Packed', 'Shipped', 'Delivered'];
 
-function statusIndex(status) {
-  const map = {
-    Processing: 0,
-    Packed: 1,
-    Shipped: 2,
-    Delivered: 3,
-    Cancelled: -1,
-  };
-  return map[status] ?? 0;
-}
+// Map all fulfillment statuses → which step index they represent
+const STATUS_STEP_MAP = {
+  Processing: 0,
+  Packed: 1,
+  Shipped: 2,
+  'Out for Delivery': 2,  // same visual step as Shipped
+  Delivered: 3,
+  // Edge cases: show last-known safe step with a warning
+  Stuck: 1,               // order stuck at packing/dispatch
+  Failed: 1,              // delivery failed
+  Cancelled: -1,
+};
+
+// For edge-case statuses, show a contextual warning message
+const STATUS_WARNINGS = {
+  Stuck: { icon: '⚠️', msg: 'Your order has been temporarily delayed. Our team is working to resolve this.' },
+  Failed: { icon: '⚠️', msg: 'A delivery attempt was unsuccessful. Please contact us to reschedule.' },
+  'Out for Delivery': { icon: '🚚', msg: 'Your order is out for delivery today!' },
+};
 
 function ProgressBar({ status }) {
   if (status === 'Cancelled') {
@@ -25,22 +34,35 @@ function ProgressBar({ status }) {
     );
   }
 
-  const current = statusIndex(status);
+  const current = STATUS_STEP_MAP[status] ?? 0;
+  const warning = STATUS_WARNINGS[status];
+
   return (
-    <div className="track-progress">
-      {STEPS.map((step, i) => (
-        <div key={step} className={`track-step ${i <= current ? 'done' : ''} ${i === current ? 'active' : ''}`}>
-          <div className="track-dot">
-            {i < current && <span className="checkmark">✓</span>}
-            {i === current && <span className="dot-pulse" />}
-          </div>
-          <span className="track-label">{step}</span>
-          {i < STEPS.length - 1 && (
-            <div className={`track-line ${i < current ? 'done' : ''}`} />
-          )}
+    <>
+      {warning && (
+        <div className={`track-status-notice ${status === 'Failed' || status === 'Stuck' ? 'notice-warn' : 'notice-info'}`}>
+          <span>{warning.icon}</span>
+          <p>{warning.msg}</p>
         </div>
-      ))}
-    </div>
+      )}
+      <div className="track-progress">
+        {STEPS.map((step, i) => (
+          <div key={step} className={`track-step ${i <= current ? 'done' : ''} ${i === current ? 'active' : ''}`}>
+            <div className="track-dot">
+              {i < current && <span className="checkmark">✓</span>}
+              {i === current && <span className="dot-pulse" />}
+            </div>
+            <span className="track-label">
+              {/* Show actual status label on the active step for clarity */}
+              {i === current && status !== STEPS[i] ? status : step}
+            </span>
+            {i < STEPS.length - 1 && (
+              <div className={`track-line ${i < current ? 'done' : ''}`} />
+            )}
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
