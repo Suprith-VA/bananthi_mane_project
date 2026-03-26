@@ -1,5 +1,5 @@
 .community-banner {
-  background-color: var(--sand-brown);
+  background-color: var(--sage-green);
   color: #fff;
   text-align: center;
   padding: 60px 5%;
@@ -11,7 +11,8 @@
 }
 .banner-btn {
   background: var(--white);
-  color: var(--sand-brown);
+  color: var(--sage-green);
+  font-weight: 600;
 }
 .banner-btn:hover {
   background: var(--light-cream);

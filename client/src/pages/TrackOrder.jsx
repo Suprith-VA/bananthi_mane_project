@@ -184,13 +184,15 @@ export default function TrackOrder() {
               <ProgressBar status={order.fulfillmentStatus} />
             </div>
 
-            {(order.fulfillmentStatus === 'Shipped' || order.fulfillmentStatus === 'Delivered') && order.awbCode && (
+            {order.awbCode && (
               <div className="track-shipping-details">
                 <h3>Shipment Details</h3>
-                <div className="shipping-row">
-                  <span className="meta-label">Courier</span>
-                  <span className="meta-value">{order.courierName || 'In transit'}</span>
-                </div>
+                {order.courierName && (
+                  <div className="shipping-row">
+                    <span className="meta-label">Courier</span>
+                    <span className="meta-value">{order.courierName}</span>
+                  </div>
+                )}
                 <div className="shipping-row awb-row">
                   <span className="meta-label">AWB / Tracking No.</span>
                   <div className="awb-value-group">
@@ -218,12 +220,6 @@ export default function TrackOrder() {
                 <p className="shiprocket-hint">
                   Click "Track on Shiprocket", then paste your AWB code into the tracker.
                 </p>
-              </div>
-            )}
-
-            {(order.fulfillmentStatus === 'Shipped' || order.fulfillmentStatus === 'Delivered') && !order.awbCode && (
-              <div className="track-shipping-details">
-                <p className="shiprocket-hint">Your order has been shipped. Tracking details will appear here shortly.</p>
               </div>
             )}
           </div>

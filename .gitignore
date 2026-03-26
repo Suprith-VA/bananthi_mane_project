@@ -24,6 +24,9 @@ npm-debug.log*
 *.swp
 *.swo
 
+# Uploaded images (user-generated content)
+server/uploads/
+
 # Internal project docs (not for public repo)
 temp.txt
 AU_RP_FAQ.txt

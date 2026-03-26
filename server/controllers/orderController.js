@@ -162,6 +162,41 @@ export const updateOrderStatus = async (req, res) => {
       data.status = fulfillmentToStatus(fulfillmentStatus);
     }
 
+    // If setting to Cancelled, restore stock in a transaction
+    if (fulfillmentStatus === 'Cancelled') {
+      const existing = await prisma.order.findUnique({
+        where: { id: req.params.id },
+        include: { items: true },
+      });
+
+      if (!existing) return res.status(404).json({ message: 'Order not found' });
+      if (existing.fulfillmentStatus === 'Cancelled') {
+        return res.status(400).json({ message: 'Order is already cancelled' });
+      }
+
+      const order = await prisma.$transaction(async (tx) => {
+        for (const item of existing.items) {
+          if (item.productId) {
+            await tx.product.update({
+              where: { id: item.productId },
+              data: { stockQuantity: { increment: item.quantity } },
+            });
+          }
+        }
+
+        return tx.order.update({
+          where: { id: req.params.id },
+          data,
+          include: {
+            items: true,
+            user: { select: { id: true, name: true, email: true, phone: true } },
+          },
+        });
+      });
+
+      return res.json(serializeOrder(order));
+    }
+
     const order = await prisma.order.update({
       where: { id: req.params.id },
       data,

@@ -22,6 +22,7 @@ import TrackOrder from './pages/TrackOrder';
 import About from './pages/About';
 import FAQ from './pages/FAQ';
 import ReturnPolicy from './pages/ReturnPolicy';
+import ResetPassword from './pages/ResetPassword';
 
 import './styles/globals.css';
 
@@ -55,6 +56,7 @@ function AppShell() {
         <Route path="/about"          element={<About />} />
         <Route path="/faq"            element={<FAQ />} />
         <Route path="/return-policy"  element={<ReturnPolicy />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>
 
       <CommunityBanner />

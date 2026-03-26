@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import './StaticPage.css';
 
 export default function About() {
@@ -134,17 +133,6 @@ export default function About() {
         </div>
       </section>
 
-      {/* ─── CTA ─────────────────────────────────────────────── */}
-      <section className="about-cta-section">
-        <div className="about-cta-inner">
-          <h2>Empower your wellness through nature's gifts.</h2>
-          <p>You focus on your little one; let us focus on you.</p>
-          <div className="about-cta-btns">
-            <Link to="/products" className="btn about-cta-btn">Explore Our Products</Link>
-            <Link to="/contact" className="btn-outline-green">Get in Touch</Link>
-          </div>
-        </div>
-      </section>
     </main>
   );
 }

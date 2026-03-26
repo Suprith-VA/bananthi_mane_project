@@ -192,7 +192,12 @@ export default function AuthModal({ isOpen, onClose }) {
         {isLogin && (
           <div className="auth-forgot">
             <span onClick={async () => {
-              if (!email) { setError('Enter your email address first'); return; }
+              if (!email || !EMAIL_RE.test(email)) {
+                setError('Please enter a valid email address first.');
+                return;
+              }
+              setLoading(true);
+              setError('');
               try {
                 const res = await fetch('/api/auth/forgot-password', {
                   method: 'POST',
@@ -200,11 +205,24 @@ export default function AuthModal({ isOpen, onClose }) {
                   body: JSON.stringify({ email }),
                 });
                 const data = await res.json();
-                setError('');
-                alert(data.resetUrl
-                  ? `Dev mode — Reset link: ${data.resetUrl}`
-                  : data.message);
-              } catch { setError('Request failed'); }
+                if (!res.ok) throw new Error(data.message || 'Request failed');
+
+                if (data.resetUrl) {
+                  setError('');
+                  alert(`A password reset link has been generated.\n\n${data.resetUrl}\n\n(Email delivery will be enabled before deployment.)`);
+                } else {
+                  setError(data.message || 'If this email is registered, you will receive a reset link.');
+                }
+              } catch (err) {
+                if (err.message?.toLowerCase().includes('not found') || err.message?.toLowerCase().includes('not registered')) {
+                  setError('No account found with this email. Please create an account.');
+                  setIsLogin(false);
+                } else {
+                  setError(err.message || 'Request failed');
+                }
+              } finally {
+                setLoading(false);
+              }
             }}>
               Forgot password?
             </span>

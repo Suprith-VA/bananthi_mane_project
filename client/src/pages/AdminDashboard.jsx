@@ -291,6 +291,7 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState([]);
   const [blogs, setBlogs] = useState([]);
   const [users, setUsers] = useState([]);
+  const [subscribers, setSubscribers] = useState([]);
 
   const [editingProduct, setEditingProduct] = useState(undefined);
   const [editingBlog, setEditingBlog] = useState(undefined);
@@ -333,6 +334,13 @@ export default function AdminDashboard() {
     finally { setLoading(false); }
   }, [get]);
 
+  const fetchSubscribers = useCallback(async () => {
+    setLoading(true); setError(null);
+    try { setSubscribers(await get('/api/admin/subscribers')); }
+    catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  }, [get]);
+
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
@@ -342,6 +350,7 @@ export default function AdminDashboard() {
     if (activeTab === 'products') fetchProducts();
     if (activeTab === 'blogs') fetchBlogs();
     if (activeTab === 'users') fetchUsers();
+    if (activeTab === 'subscribers') fetchSubscribers();
   }, [activeTab]);
 
   /* ── Order actions ─────────────────────────────────────── */
@@ -443,11 +452,31 @@ export default function AdminDashboard() {
     } catch (err) { alert(err.message); }
   };
 
+  /* ── Subscriber actions ────────────────────────────────── */
+  const handleDeleteSubscriber = async (subId) => {
+    if (!confirm('Remove this subscriber?')) return;
+    try {
+      await mutate(`/api/admin/subscribers/${subId}`, 'DELETE');
+      fetchSubscribers();
+    } catch (err) { alert(err.message); }
+  };
+
+  const handleComposeNewsletter = async () => {
+    try {
+      const data = await get('/api/admin/subscribers/emails');
+      const emails = data.emails || [];
+      if (emails.length === 0) { alert('No active subscribers found.'); return; }
+      const bcc = emails.join(',');
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&bcc=${encodeURIComponent(bcc)}&su=${encodeURIComponent('Newsletter from Bananthi Mane')}`, '_blank');
+    } catch (err) { alert(err.message); }
+  };
+
   /* ── Tab config based on role ──────────────────────────── */
   const tabs = [
     { key: 'orders', label: 'Orders' },
     { key: 'products', label: 'Products' },
     { key: 'blogs', label: 'Blogs' },
+    { key: 'subscribers', label: 'Subscribers' },
     ...(isSuperAdmin ? [{ key: 'users', label: 'Users' }] : []),
   ];
 
@@ -685,6 +714,47 @@ export default function AdminDashboard() {
     </div>
   );
 
+  const renderSubscribersTable = () => (
+    <div className="admin-table-container">
+      <div className="table-header-actions">
+        <button className="action-btn" onClick={handleComposeNewsletter}>
+          ✉ Compose Newsletter
+        </button>
+      </div>
+      <table className="admin-table">
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Name</th>
+            <th>Source</th>
+            <th>Active</th>
+            <th>Subscribed On</th>
+            {isSuperAdmin && <th>Actions</th>}
+          </tr>
+        </thead>
+        <tbody>
+          {subscribers.map(s => (
+            <tr key={s._id}>
+              <td>{s.email}</td>
+              <td>{s.name || '—'}</td>
+              <td>{s.source || 'public-subscribe'}</td>
+              <td>{s.isActive ? <span className="dot dot-green" /> : <span className="dot dot-red" />}</td>
+              <td>{new Date(s.createdAt).toLocaleDateString()}</td>
+              {isSuperAdmin && (
+                <td>
+                  <button className="action-btn action-btn-sm action-btn-danger" onClick={() => handleDeleteSubscriber(s._id)}>Remove</button>
+                </td>
+              )}
+            </tr>
+          ))}
+          {subscribers.length === 0 && !loading && (
+            <tr><td colSpan={isSuperAdmin ? 6 : 5} className="empty-cell">No subscribers found.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+
   /* ── Guard ─────────────────────────────────────────────── */
   if (!token || (role !== 'admin' && role !== 'super-admin' && !userInfo?.isAdmin)) {
     return (
@@ -723,6 +793,7 @@ export default function AdminDashboard() {
             {activeTab === 'orders' && renderOrdersTable()}
             {activeTab === 'products' && renderProductsTable()}
             {activeTab === 'blogs' && renderBlogsTable()}
+            {activeTab === 'subscribers' && renderSubscribersTable()}
             {activeTab === 'users' && isSuperAdmin && renderUsersTable()}
           </>
         )}
