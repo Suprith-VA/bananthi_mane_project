@@ -2,7 +2,7 @@
 .field-hint {
   font-size: 0.78rem;
   color: #aaa;
-  margin-top: -8px;
+  margin-top: 4px;
   margin-bottom: 8px;
   padding-left: 4px;
 }
@@ -138,6 +138,7 @@
 .field-hint {
   font-size: 0.78rem;
   color: #aaa;
+  margin-top: 4px;
 }
 
 .profile-save-btn {

@@ -30,24 +30,43 @@ model User {
 }
 
 model Product {
-  id            String      @id @default(uuid())
-  title         String
-  slug          String      @unique
-  name          String
-  price         Float
-  images        String[]    @default([])
-  image         String      @default("/images/main.png")
-  description   String      @default("")
-  category      String      @default("General")
-  stockQuantity Int         @default(100)
-  isActive      Boolean     @default(true)
-  isBestseller  Boolean     @default(false)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id              String           @id @default(uuid())
+  title           String
+  slug            String           @unique
+  name            String
+  price           Float
+  images          String[]         @default([])
+  image           String           @default("/images/main.png")
+  description     String           @default("")
+  category        String           @default("General")
+  stockQuantity   Int              @default(100)
+  isActive        Boolean          @default(true)
+  isBestseller    Boolean          @default(false)
+  keyBenefits     String           @default("")
+  howToUse        String           @default("")
+  shippingReturns String           @default("")
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
+  variants   ProductVariant[]
   orderItems OrderItem[]
 
   @@map("products")
+}
+
+model ProductVariant {
+  id            String   @id @default(uuid())
+  productId     String
+  product       Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  unitLabel     String
+  price         Float
+  stockQuantity Int      @default(50)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([productId])
+  @@map("product_variants")
 }
 
 model Order {
@@ -93,6 +112,7 @@ model OrderItem {
   productId String?
   product   Product? @relation(fields: [productId], references: [id])
   name      String
+  unitLabel String?
   price     Float
   quantity  Int      @default(1)
   image     String?

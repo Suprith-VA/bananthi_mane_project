@@ -22,6 +22,7 @@ function serializeOrderItem(item) {
     _id: item.id,
     product: item.productId,
     name: item.name,
+    unitLabel: item.unitLabel || null,
     price: item.price,
     qty: item.quantity,
     quantity: item.quantity,
@@ -71,8 +72,25 @@ export function serializeOrder(order) {
   };
 }
 
+function serializeVariant(v) {
+  if (!v) return null;
+  return {
+    _id: v.id,
+    id: v.id,
+    productId: v.productId,
+    unitLabel: v.unitLabel,
+    price: v.price,
+    stockQuantity: v.stockQuantity,
+    sortOrder: v.sortOrder,
+  };
+}
+
 export function serializeProduct(product) {
   if (!product) return null;
+  const variants = (product.variants || [])
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
+    .map(serializeVariant);
+
   return {
     _id: product.id,
     id: product.id,
@@ -88,6 +106,10 @@ export function serializeProduct(product) {
     stock: product.stockQuantity,
     isActive: product.isActive,
     isBestseller: product.isBestseller,
+    keyBenefits: product.keyBenefits || '',
+    howToUse: product.howToUse || '',
+    shippingReturns: product.shippingReturns || '',
+    variants,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };

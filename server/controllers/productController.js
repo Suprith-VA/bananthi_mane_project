@@ -2,6 +2,8 @@ import prisma from '../config/prisma.js';
 import { serializeProduct } from '../utils/serializers.js';
 import { isValidUUID, toSlug } from '../utils/helpers.js';
 
+const INCLUDE_VARIANTS = { variants: { orderBy: { sortOrder: 'asc' } } };
+
 // GET /api/products
 export const getProducts = async (req, res) => {
   try {
@@ -13,6 +15,7 @@ export const getProducts = async (req, res) => {
 
     const products = await prisma.product.findMany({
       where,
+      include: INCLUDE_VARIANTS,
       orderBy: { createdAt: 'desc' },
     });
 
@@ -30,7 +33,10 @@ export const getProductById = async (req, res) => {
       ? { id: identifier, isActive: true }
       : { slug: identifier, isActive: true };
 
-    const product = await prisma.product.findFirst({ where });
+    const product = await prisma.product.findFirst({
+      where,
+      include: INCLUDE_VARIANTS,
+    });
     if (!product) return res.status(404).json({ message: 'Product not found' });
 
     res.json(serializeProduct(product));
@@ -55,15 +61,25 @@ export const createProduct = async (req, res) => {
       isActive,
       isBestseller,
       slug,
+      variants,
+      keyBenefits,
+      howToUse,
+      shippingReturns,
     } = req.body;
 
     const resolvedName = name || title;
     const resolvedTitle = title || name;
     if (!resolvedName) return res.status(400).json({ message: 'Product name/title is required' });
-    if (price == null) return res.status(400).json({ message: 'Price is required' });
     if (!image && (!images || images.length === 0)) {
       return res.status(400).json({ message: 'At least one product image is required' });
     }
+
+    // If variants supplied, use first variant's price as display price; otherwise require price
+    const hasVariants = Array.isArray(variants) && variants.length > 0;
+    const resolvedPrice = hasVariants
+      ? Math.min(...variants.map(v => v.price))
+      : price;
+    if (resolvedPrice == null) return res.status(400).json({ message: 'Price is required (or provide at least one variant)' });
 
     const resolvedSlug = slug || toSlug(resolvedTitle);
     const resolvedStock = stockQuantity ?? stock ?? 100;
@@ -75,7 +91,7 @@ export const createProduct = async (req, res) => {
         name: resolvedName,
         title: resolvedTitle,
         slug: resolvedSlug,
-        price,
+        price: resolvedPrice,
         image: resolvedImage,
         images: resolvedImages,
         description: description || '',
@@ -83,7 +99,21 @@ export const createProduct = async (req, res) => {
         stockQuantity: resolvedStock,
         isActive: isActive ?? true,
         isBestseller: isBestseller ?? false,
+        keyBenefits: keyBenefits || '',
+        howToUse: howToUse || '',
+        shippingReturns: shippingReturns || '',
+        ...(hasVariants && {
+          variants: {
+            create: variants.map((v, i) => ({
+              unitLabel: v.unitLabel,
+              price: v.price,
+              stockQuantity: v.stockQuantity ?? 50,
+              sortOrder: v.sortOrder ?? i,
+            })),
+          },
+        }),
       },
+      include: INCLUDE_VARIANTS,
     });
 
     res.status(201).json(serializeProduct(product));
@@ -103,7 +133,8 @@ export const updateProduct = async (req, res) => {
       return res.status(400).json({ message: 'Valid product id is required' });
     }
 
-    const data = { ...req.body };
+    const { variants, ...rest } = req.body;
+    const data = { ...rest };
 
     if (data.title && !data.name) data.name = data.title;
     if (data.name && !data.title) data.title = data.name;
@@ -119,9 +150,31 @@ export const updateProduct = async (req, res) => {
     delete data._id;
     delete data.id;
 
+    // If variants supplied, sync the display price to the lowest variant
+    if (Array.isArray(variants)) {
+      if (variants.length > 0) {
+        data.price = Math.min(...variants.map(v => v.price));
+      }
+
+      // Replace all variants: delete old, create new
+      await prisma.productVariant.deleteMany({ where: { productId: id } });
+      if (variants.length > 0) {
+        await prisma.productVariant.createMany({
+          data: variants.map((v, i) => ({
+            productId: id,
+            unitLabel: v.unitLabel,
+            price: v.price,
+            stockQuantity: v.stockQuantity ?? 50,
+            sortOrder: v.sortOrder ?? i,
+          })),
+        });
+      }
+    }
+
     const product = await prisma.product.update({
       where: { id },
       data,
+      include: INCLUDE_VARIANTS,
     });
 
     res.json(serializeProduct(product));

@@ -19,23 +19,26 @@ export default function Cart() {
       ) : (
         <>
           <div className="cart-page-items">
-            {Object.entries(cart).map(([name, { price, quantity }]) => (
-              <div key={name} className="cart-page-item">
+            {Object.entries(cart).map(([key, item]) => (
+              <div key={key} className="cart-page-item">
                 <div>
-                  <p className="cart-page-item-name">{name}</p>
-                  <p className="cart-page-item-price">Rs. {price.toFixed(2)}</p>
+                  <p className="cart-page-item-name">{item.name}</p>
+                  {item.unitLabel && (
+                    <p className="cart-page-item-unit">{item.unitLabel}</p>
+                  )}
+                  <p className="cart-page-item-price">Rs. {item.price.toFixed(2)}</p>
                 </div>
 
                 <div className="cart-page-actions">
                   <div className="cart-page-qty-controls">
-                    <button className="cart-page-qty-btn" onClick={() => removeOne(name)}>−</button>
-                    <span>{quantity}</span>
-                    <button className="cart-page-qty-btn" onClick={() => addToCart(name, price)}>+</button>
+                    <button className="cart-page-qty-btn" onClick={() => removeOne(key)}>−</button>
+                    <span>{item.quantity}</span>
+                    <button className="cart-page-qty-btn" onClick={() => addToCart(item)}>+</button>
                   </div>
-                  <button className="cart-page-remove" onClick={() => removeAll(name)}>
+                  <button className="cart-page-remove" onClick={() => removeAll(key)}>
                     Remove
                   </button>
-                  <span className="cart-page-line-total">Rs. {(price * quantity).toFixed(2)}</span>
+                  <span className="cart-page-line-total">Rs. {(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               </div>
             ))}

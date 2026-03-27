@@ -8,11 +8,26 @@ export default function ProductCard({ product }) {
 
   const id = product._id || product.id;
   const name = product.name || product.title;
-  const price = product.price;
   const image = product.image || '/images/main.png';
-  const outOfStock = (product.stockQuantity ?? product.stock ?? 1) === 0;
-  // Prefer slug for SEO-friendly URL; fall back to id
   const href = product.slug || id;
+
+  const hasVariants = product.variants?.length > 0;
+  const defaultVariant = hasVariants ? product.variants[0] : null;
+  const displayPrice = defaultVariant?.price ?? product.price;
+  const outOfStock = hasVariants
+    ? product.variants.every(v => (v.stockQuantity ?? 0) === 0)
+    : (product.stockQuantity ?? product.stock ?? 1) === 0;
+
+  const handleAdd = () => {
+    addToCart({
+      productId: id,
+      variantId: defaultVariant?._id || defaultVariant?.id || null,
+      name,
+      unitLabel: defaultVariant?.unitLabel || null,
+      price: displayPrice,
+      image,
+    });
+  };
 
   return (
     <div className={`product-card ${outOfStock ? 'out-of-stock' : ''}`}>
@@ -21,10 +36,13 @@ export default function ProductCard({ product }) {
         {outOfStock && <span className="oos-overlay">Out of Stock</span>}
       </div>
       <h3 onClick={() => navigate(`/products/${href}`)}>{name}</h3>
-      <p>₹{price?.toFixed(2)}</p>
+      <p>
+        {hasVariants && product.variants.length > 1 && <span className="from-label">From </span>}
+        ₹{displayPrice?.toFixed(2)}
+      </p>
       <button
         className="btn product-card-btn"
-        onClick={() => addToCart(name, price)}
+        onClick={handleAdd}
         disabled={outOfStock}
       >
         {outOfStock ? 'Out of Stock' : 'Add to Bag'}

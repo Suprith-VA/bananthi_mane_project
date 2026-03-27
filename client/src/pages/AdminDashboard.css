@@ -471,6 +471,86 @@
   min-width: 100px;
 }
 
+/* ─── Variant styles ─────────────────────────────────────── */
+.variant-fieldset {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0;
+}
+.variant-fieldset legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0 0.5rem;
+  color: var(--text-dark);
+}
+.variant-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.variant-row input {
+  flex: 1;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+}
+.variant-row input:focus {
+  border-color: var(--terracotta);
+  outline: none;
+}
+.variant-remove-btn {
+  background: #fdecea;
+  border: none;
+  color: #c0392b;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.variant-remove-btn:hover {
+  background: #c0392b;
+  color: #fff;
+}
+.variant-add-btn {
+  background: none;
+  border: 1px dashed var(--terracotta);
+  color: var(--terracotta);
+  padding: 0.45rem 0.8rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-top: 0.3rem;
+}
+.variant-add-btn:hover {
+  background: var(--terracotta);
+  color: #fff;
+}
+.variant-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.variant-tag {
+  display: inline-block;
+  background: var(--light-cream);
+  border: 1px solid var(--border-color);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
 /* ─── Responsive ─────────────────────────────────────────── */
 @media (max-width: 768px) {
   .admin-tabs {

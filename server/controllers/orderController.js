@@ -25,12 +25,19 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ message: 'Guest details are required for guest checkout' });
     }
 
-    // Validate stock availability before creating
+    // Validate stock availability — check variant stock when variantId present
     for (const item of normalizedItems) {
-      if (item.product) {
+      const qty = item.quantity || item.qty || 1;
+      if (item.variantId) {
+        const variant = await prisma.productVariant.findUnique({ where: { id: item.variantId } });
+        if (variant && variant.stockQuantity < qty) {
+          return res.status(400).json({
+            message: `Insufficient stock for "${item.name} (${item.unitLabel || variant.unitLabel})". Available: ${variant.stockQuantity}, requested: ${qty}`,
+          });
+        }
+      } else if (item.product) {
         const product = await prisma.product.findUnique({ where: { id: item.product } });
         if (!product) continue;
-        const qty = item.quantity || item.qty || 1;
         if (product.stockQuantity < qty) {
           return res.status(400).json({
             message: `Insufficient stock for "${product.name}". Available: ${product.stockQuantity}, requested: ${qty}`,
@@ -43,7 +50,6 @@ export const createOrder = async (req, res) => {
     const pStatus = paymentInfo?.paymentStatus || 'Pending';
     const isPaid = pStatus === 'Paid';
 
-    // Use transaction for atomicity: create order + decrement stock
     const order = await prisma.$transaction(async (tx) => {
       const created = await tx.order.create({
         data: {
@@ -64,6 +70,7 @@ export const createOrder = async (req, res) => {
             create: normalizedItems.map((item) => ({
               productId: item.product || null,
               name: item.name,
+              unitLabel: item.unitLabel || null,
               price: item.price,
               quantity: item.quantity || item.qty || 1,
               image: item.image || null,
@@ -73,9 +80,21 @@ export const createOrder = async (req, res) => {
         include: { items: true, user: { select: { id: true, name: true, email: true, phone: true } } },
       });
 
-      // Decrement stock for each item that has a productId
+      // Decrement stock — prefer variant stock when available
       for (const item of created.items) {
         if (item.productId) {
+          // Find matching variant by unitLabel
+          if (item.unitLabel) {
+            const variant = await tx.productVariant.findFirst({
+              where: { productId: item.productId, unitLabel: item.unitLabel },
+            });
+            if (variant) {
+              await tx.productVariant.update({
+                where: { id: variant.id },
+                data: { stockQuantity: { decrement: item.quantity } },
+              });
+            }
+          }
           await tx.product.update({
             where: { id: item.productId },
             data: { stockQuantity: { decrement: item.quantity } },
@@ -149,6 +168,52 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
+// Helper: restore stock for an order's items (used when cancelling)
+async function restoreStock(tx, items) {
+  for (const item of items) {
+    if (item.productId) {
+      if (item.unitLabel) {
+        const variant = await tx.productVariant.findFirst({
+          where: { productId: item.productId, unitLabel: item.unitLabel },
+        });
+        if (variant) {
+          await tx.productVariant.update({
+            where: { id: variant.id },
+            data: { stockQuantity: { increment: item.quantity } },
+          });
+        }
+      }
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { stockQuantity: { increment: item.quantity } },
+      });
+    }
+  }
+}
+
+// Helper: deduct stock for an order's items (used when reactivating a cancelled order)
+async function deductStock(tx, items) {
+  for (const item of items) {
+    if (item.productId) {
+      if (item.unitLabel) {
+        const variant = await tx.productVariant.findFirst({
+          where: { productId: item.productId, unitLabel: item.unitLabel },
+        });
+        if (variant) {
+          await tx.productVariant.update({
+            where: { id: variant.id },
+            data: { stockQuantity: { decrement: item.quantity } },
+          });
+        }
+      }
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { stockQuantity: { decrement: item.quantity } },
+      });
+    }
+  }
+}
+
 // PUT /api/orders/:id/status  (admin — both admin + super-admin)
 export const updateOrderStatus = async (req, res) => {
   try {
@@ -162,28 +227,20 @@ export const updateOrderStatus = async (req, res) => {
       data.status = fulfillmentToStatus(fulfillmentStatus);
     }
 
-    // If setting to Cancelled, restore stock in a transaction
-    if (fulfillmentStatus === 'Cancelled') {
-      const existing = await prisma.order.findUnique({
-        where: { id: req.params.id },
-        include: { items: true },
-      });
+    const existing = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      include: { items: true },
+    });
 
-      if (!existing) return res.status(404).json({ message: 'Order not found' });
-      if (existing.fulfillmentStatus === 'Cancelled') {
-        return res.status(400).json({ message: 'Order is already cancelled' });
-      }
+    if (!existing) return res.status(404).json({ message: 'Order not found' });
 
+    const wasCancelled = existing.fulfillmentStatus === 'Cancelled';
+    const becomingCancelled = fulfillmentStatus === 'Cancelled';
+
+    // Cancelling a non-cancelled order → restore stock
+    if (becomingCancelled && !wasCancelled) {
       const order = await prisma.$transaction(async (tx) => {
-        for (const item of existing.items) {
-          if (item.productId) {
-            await tx.product.update({
-              where: { id: item.productId },
-              data: { stockQuantity: { increment: item.quantity } },
-            });
-          }
-        }
-
+        await restoreStock(tx, existing.items);
         return tx.order.update({
           where: { id: req.params.id },
           data,
@@ -193,10 +250,26 @@ export const updateOrderStatus = async (req, res) => {
           },
         });
       });
-
       return res.json(serializeOrder(order));
     }
 
+    // Reactivating a cancelled order → deduct stock again
+    if (wasCancelled && !becomingCancelled) {
+      const order = await prisma.$transaction(async (tx) => {
+        await deductStock(tx, existing.items);
+        return tx.order.update({
+          where: { id: req.params.id },
+          data,
+          include: {
+            items: true,
+            user: { select: { id: true, name: true, email: true, phone: true } },
+          },
+        });
+      });
+      return res.json(serializeOrder(order));
+    }
+
+    // No stock change needed for other transitions
     const order = await prisma.order.update({
       where: { id: req.params.id },
       data,
@@ -261,17 +334,8 @@ export const cancelOrder = async (req, res) => {
       return res.status(400).json({ message: 'Order is already cancelled' });
     }
 
-    // Restore stock + update status in a transaction
     await prisma.$transaction(async (tx) => {
-      for (const item of order.items) {
-        if (item.productId) {
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stockQuantity: { increment: item.quantity } },
-          });
-        }
-      }
-
+      await restoreStock(tx, order.items);
       await tx.order.update({
         where: { id },
         data: {

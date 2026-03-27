@@ -22,7 +22,8 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   color: #aaa;
-  margin-top: -6px;
+  margin-top: 4px;
+  margin-bottom: 16px;
 }
 
 .breadcrumb {
@@ -48,6 +49,61 @@
   color: var(--sage-green);
   margin-bottom: 24px;
 }
+/* ── Variant pills ── */
+.pdp-variants {
+  margin-bottom: 24px;
+}
+.pdp-variants-label {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #777;
+  margin-bottom: 10px;
+}
+.pdp-variant-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.variant-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 18px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark);
+  transition: all 0.2s;
+}
+.variant-pill:hover:not(:disabled) {
+  border-color: var(--terracotta);
+}
+.variant-pill.active {
+  border-color: var(--terracotta);
+  background: var(--terracotta);
+  color: #fff;
+}
+.variant-pill.active .variant-pill-price {
+  color: rgba(255,255,255,0.85);
+}
+.variant-pill.oos {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.variant-pill-price {
+  font-size: 12px;
+  font-weight: 400;
+  color: #999;
+}
+
 .pdp-description {
   font-size: 15px;
   line-height: 1.8;
@@ -58,6 +114,10 @@
   width: 100%;
   padding: 18px;
   font-size: 15px;
+  transition: background 0.2s, transform 0.1s;
+}
+.pdp-atc-btn.added {
+  background: var(--sage-green);
 }
 
 .pdp-accordion {

@@ -41,42 +41,87 @@ function useAdminFetch(token) {
 
 function ProductModal({ product, onClose, onSave, token }) {
   const blank = {
-    title: '', price: '', description: '', category: 'Cold Pressed Oil',
+    title: '', description: '', category: 'Cold Pressed Oil',
     stockQuantity: 100, image: '', isActive: true, isBestseller: false,
+    keyBenefits: '', howToUse: '', shippingReturns: '',
+    variants: [{ unitLabel: '', price: '', stockQuantity: 50 }],
   };
+
+  const initVariants = product?.variants?.length
+    ? product.variants.map(v => ({
+        unitLabel: v.unitLabel || '',
+        price: v.price ?? '',
+        stockQuantity: v.stockQuantity ?? 50,
+      }))
+    : [{ unitLabel: '', price: '', stockQuantity: 50 }];
+
   const [form, setForm] = useState(product ? {
     title: product.title || product.name || '',
-    price: product.price || '',
     description: product.description || '',
     category: product.category || 'Cold Pressed Oil',
     stockQuantity: product.stockQuantity ?? product.stock ?? 100,
     image: product.image || '',
     isActive: product.isActive ?? true,
     isBestseller: product.isBestseller ?? false,
+    keyBenefits: product.keyBenefits || '',
+    howToUse: product.howToUse || '',
+    shippingReturns: product.shippingReturns || '',
+    variants: initVariants,
   } : blank);
   const [err, setErr] = useState('');
+
+  const updateVariant = (index, field, value) => {
+    const updated = [...form.variants];
+    updated[index] = { ...updated[index], [field]: value };
+    setForm({ ...form, variants: updated });
+  };
+
+  const addVariant = () => {
+    setForm({ ...form, variants: [...form.variants, { unitLabel: '', price: '', stockQuantity: 50 }] });
+  };
+
+  const removeVariant = (index) => {
+    if (form.variants.length <= 1) return;
+    setForm({ ...form, variants: form.variants.filter((_, i) => i !== index) });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!form.image.trim()) { setErr('Image is required — upload a file or paste a URL.'); return; }
+
+    const validVariants = form.variants.filter(v => v.unitLabel.trim() && v.price !== '' && v.price !== null);
+    if (validVariants.length === 0) {
+      setErr('At least one size variant with a label and price is required.');
+      return;
+    }
+
     setErr('');
-    onSave({ ...form, price: Number(form.price), stockQuantity: Number(form.stockQuantity) });
+    const payload = {
+      ...form,
+      stockQuantity: Number(form.stockQuantity),
+      variants: validVariants.map((v, i) => ({
+        unitLabel: v.unitLabel.trim(),
+        price: Number(v.price),
+        stockQuantity: Number(v.stockQuantity) || 50,
+        sortOrder: i,
+      })),
+    };
+    delete payload.price;
+    onSave(payload);
   };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content modal-wide" onClick={(e) => e.stopPropagation()}>
         <h2>{product ? 'Edit Product' : 'New Product'}</h2>
         {err && <p className="modal-error">{err}</p>}
         <form onSubmit={handleSubmit} className="modal-form">
           <label>Title *<input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></label>
-          <label>Price (₹) *<input required type="number" min="0" step="0.01" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} /></label>
           <label>Category
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
               {PRODUCT_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </label>
-          <label>Stock Quantity<input type="number" min="0" value={form.stockQuantity} onChange={(e) => setForm({ ...form, stockQuantity: e.target.value })} /></label>
           <label>Image *
             <ImageUploadField
               value={form.image}
@@ -85,6 +130,49 @@ function ProductModal({ product, onClose, onSave, token }) {
             />
           </label>
           <label>Description<textarea rows="3" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></label>
+
+          {/* ── Pricing & Sizes ── */}
+          <fieldset className="variant-fieldset">
+            <legend>Pricing &amp; Sizes</legend>
+            {form.variants.map((v, i) => (
+              <div key={i} className="variant-row">
+                <input
+                  placeholder="Size label (e.g. 500 ML, 250 Gms)"
+                  value={v.unitLabel}
+                  onChange={(e) => updateVariant(i, 'unitLabel', e.target.value)}
+                  required
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Price (₹)"
+                  value={v.price}
+                  onChange={(e) => updateVariant(i, 'price', e.target.value)}
+                  required
+                />
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Stock"
+                  value={v.stockQuantity}
+                  onChange={(e) => updateVariant(i, 'stockQuantity', e.target.value)}
+                />
+                {form.variants.length > 1 && (
+                  <button type="button" className="variant-remove-btn" onClick={() => removeVariant(i)} title="Remove variant">×</button>
+                )}
+              </div>
+            ))}
+            <button type="button" className="variant-add-btn" onClick={addVariant}>+ Add Size Variant</button>
+          </fieldset>
+
+          <label>Overall Stock Quantity<input type="number" min="0" value={form.stockQuantity} onChange={(e) => setForm({ ...form, stockQuantity: e.target.value })} /></label>
+
+          {/* ── Product Info Fields ── */}
+          <label>Key Benefits<textarea rows="3" value={form.keyBenefits} onChange={(e) => setForm({ ...form, keyBenefits: e.target.value })} placeholder="Health benefits, nutritional value, etc." /></label>
+          <label>How to Use<textarea rows="3" value={form.howToUse} onChange={(e) => setForm({ ...form, howToUse: e.target.value })} placeholder="Usage instructions, dosage, preparation..." /></label>
+          <label>Shipping &amp; Returns<textarea rows="2" value={form.shippingReturns} onChange={(e) => setForm({ ...form, shippingReturns: e.target.value })} placeholder="Dispatch time, shipping policy, return policy..." /></label>
+
           <label className="checkbox-label"><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active</label>
           <label className="checkbox-label"><input type="checkbox" checked={form.isBestseller} onChange={(e) => setForm({ ...form, isBestseller: e.target.checked })} /> Show in Bestsellers (Home Page)</label>
           <div className="modal-actions">
@@ -236,11 +324,12 @@ function OrderDetailModal({ order, onClose }) {
 
         <h3 style={{ margin: '1.2rem 0 0.6rem' }}>Items</h3>
         <table className="admin-table">
-          <thead><tr><th>Product</th><th>Qty</th><th>Price</th></tr></thead>
+          <thead><tr><th>Product</th><th>Size</th><th>Qty</th><th>Price</th></tr></thead>
           <tbody>
             {(order.items || order.orderItems || []).map((item, i) => (
               <tr key={i}>
                 <td>{item.name}</td>
+                <td>{item.unitLabel || '—'}</td>
                 <td>{item.qty || item.quantity}</td>
                 <td>₹{item.price}</td>
               </tr>
@@ -585,7 +674,7 @@ export default function AdminDashboard() {
           <tr>
             <th>Image</th>
             <th>Name</th>
-            <th>Price</th>
+            <th>Variants / Price</th>
             <th>Category</th>
             <th>Stock</th>
             <th>Active</th>
@@ -598,7 +687,14 @@ export default function AdminDashboard() {
             <tr key={p._id} className={!p.isActive ? 'row-inactive' : ''}>
               <td><img src={p.image} alt="" className="table-thumb" onError={(e) => { e.target.src = '/images/main.png'; }} /></td>
               <td>{p.title || p.name}</td>
-              <td>₹{p.price}</td>
+              <td className="variant-cell">
+                {p.variants?.length > 0
+                  ? p.variants.map((v, i) => (
+                      <span key={v._id || i} className="variant-tag">{v.unitLabel}: ₹{v.price}</span>
+                    ))
+                  : <span>₹{p.price}</span>
+                }
+              </td>
               <td>{p.category}</td>
               <td className={p.stockQuantity === 0 ? 'text-danger' : ''}>{p.stockQuantity ?? p.stock}</td>
               <td>{p.isActive ? <span className="dot dot-green" /> : <span className="dot dot-red" />}</td>

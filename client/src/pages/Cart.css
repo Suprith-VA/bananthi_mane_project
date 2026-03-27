@@ -32,6 +32,13 @@
   margin-bottom: 0.2rem;
 }
 
+.cart-page-item-unit {
+  font-size: 0.82rem;
+  color: #999;
+  font-weight: 500;
+  margin-bottom: 0.15rem;
+}
+
 .cart-page-item-price {
   color: #666;
 }
