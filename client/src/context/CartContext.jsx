@@ -1,19 +1,27 @@
-import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { useAuth } from './AuthContext';
 
 const CartContext = createContext(null);
-const STORAGE_KEY = 'bananthi_cart';
 
-function loadCart() {
+/* ── Storage helpers ──────────────────────────────────────────
+   Guest  → localStorage key: bananthi_cart_guest
+   User   → localStorage key: bananthi_cart_<userId>
+   ──────────────────────────────────────────────────────────── */
+function storageKey(userId) {
+  return userId ? `bananthi_cart_${userId}` : 'bananthi_cart_guest';
+}
+
+function loadCart(userId) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey(userId));
     if (raw) return JSON.parse(raw);
   } catch { /* corrupt data — start fresh */ }
   return {};
 }
 
-function saveCart(cart) {
+function saveCart(userId, cart) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+    localStorage.setItem(storageKey(userId), JSON.stringify(cart));
   } catch { /* quota exceeded — silent */ }
 }
 
@@ -33,10 +41,26 @@ function cartKey(productId, variantId) {
 }
 
 export function CartProvider({ children }) {
-  const [cart, setCart] = useState(loadCart);
+  const { userInfo } = useAuth();
+  const userId = userInfo?._id || userInfo?.id || null;
+  const prevUserRef = useRef(userId);
+
+  const [cart, setCart] = useState(() => loadCart(userId));
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => { saveCart(cart); }, [cart]);
+  /* When auth state changes (login / logout / switch user),
+     reload that identity's cart from localStorage */
+  useEffect(() => {
+    if (prevUserRef.current !== userId) {
+      prevUserRef.current = userId;
+      setCart(loadCart(userId));
+    }
+  }, [userId]);
+
+  /* Persist cart to localStorage whenever it changes */
+  useEffect(() => {
+    saveCart(userId, cart);
+  }, [cart, userId]);
 
   const addToCart = useCallback((item) => {
     const key = cartKey(item.productId, item.variantId);

@@ -27,14 +27,21 @@ export default function Services() {
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
 
-    // Also subscribe them to the newsletter
     try {
-      await fetch('/api/subscribe', {
+      const res = await fetch('/api/services-waitlist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: form.email, name: `${form.firstName} ${form.lastName}`.trim(), source: 'services-waitlist' }),
+        body: JSON.stringify({
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
+          email: form.email.trim(),
+          dueDate: form.dueDate || '',
+          interest: form.interest.trim(),
+        }),
       });
-    } catch { /* silent */ }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Registration failed');
+    } catch { /* silent — still show success */ }
 
     setSent(true);
     setForm({ firstName: '', lastName: '', email: '', dueDate: '', interest: '' });

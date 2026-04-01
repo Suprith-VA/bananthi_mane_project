@@ -8,6 +8,8 @@ export default function Contact() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [errors, setErrors] = useState({});
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   const handle = e => {
     const { name, value } = e.target;
@@ -24,13 +26,27 @@ export default function Contact() {
     return errs;
   };
 
-  const submit = e => {
+  const submit = async e => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
-    // TODO: wire to backend contact endpoint when available
-    setSent(true);
-    setForm({ name: '', email: '', phone: '', message: '' });
+    setLoading(true);
+    setServerError('');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to send message');
+      setSent(true);
+      setForm({ name: '', email: '', phone: '', message: '' });
+    } catch (err) {
+      setServerError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (sent) {
@@ -56,6 +72,7 @@ export default function Contact() {
           Have a question about an order, product, or service? We'd love to hear from you.
         </p>
         <form onSubmit={submit} noValidate>
+          {serverError && <div className="partnership-error">{serverError}</div>}
           <div className="input-group">
             <div className="field-wrap">
               <input
@@ -102,7 +119,9 @@ export default function Contact() {
             />
             {errors.message && <span className="field-error">{errors.message}</span>}
           </div>
-          <button type="submit" className="btn form-submit-btn">Send Message</button>
+          <button type="submit" className="btn form-submit-btn" disabled={loading}>
+            {loading ? 'Sending…' : 'Send Message'}
+          </button>
         </form>
       </div>
     </main>

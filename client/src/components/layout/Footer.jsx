@@ -54,6 +54,7 @@ export default function Footer() {
             <li><Link to="/blog" onClick={handleNavClick}>Journal</Link></li>
             <li><Link to="/return-policy" onClick={handleNavClick}>Return Policy</Link></li>
             <li><Link to="/faq" onClick={handleNavClick}>Help &amp; FAQ</Link></li>
+            <li><Link to="/partnership" onClick={handleNavClick}>Sales &amp; Partnership</Link></li>
           </ul>
         </div>
 

@@ -82,8 +82,9 @@ model Order {
 
   shippingAddress Json?
 
-  razorpayOrderId String?
-  paymentMethod   String    @default("COD")
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  paymentMethod     String    @default("COD")
   paymentStatus   String    @default("Pending")
   isPaid          Boolean   @default(false)
   paidAt          DateTime?

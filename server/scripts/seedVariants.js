@@ -4,7 +4,8 @@ const FINAL_PRODUCTS = [
   // ─── Cold Pressed Oil ───
   {
     name: 'Sesame Oil', category: 'Cold Pressed Oil',
-    keyBenefits: 'Postnatal Massage, Nutritional Support, Encourages healing. Rich in natural antioxidants and minerals.',
+    description: 'Sesame oil is highly valued in postpartum recovery for its nutrient-dense, warming and anti-inflammatory properties.\n\nIngredients: Organic Sesame Oil',
+    keyBenefits: '1. Postnatal Massage to alleviate pain, reduce inflammation and strengthen the body.\n2. Nutritional Support as it is rich in calcium and promotes bone strength.\n3. Encourages healing the uterus and cleanse the body.\n4. Topical application can help combat postpartum hair fall and keep skin hydrated.',
     howToUse: 'Warm the oil slightly before use. Ideal for full-body postpartum massage. Can also be used in cooking for added nutrition.',
     shippingReturns: 'Orders are dispatched within 2–3 business days. Free shipping on orders above ₹999. Returns accepted within 7 days for unopened items.',
     variants: [
@@ -15,7 +16,8 @@ const FINAL_PRODUCTS = [
   },
   {
     name: 'Coconut Oil', category: 'Cold Pressed Oil',
-    keyBenefits: 'Acts as a moisturizer and gives relief. Supports skin healing and hydration during postpartum recovery.',
+    description: 'Coconut Oil is a versatile postpartum staple used for healing, breastfeeding support, and new born care.\n\nIngredients: Organic Coconut Oil',
+    keyBenefits: '1. Applying to sore, cracked, or itchy nipples provides soothing relief and acts as an antibacterial barrier.\n2. A small amount applied to breast pump flanges can reduce friction and discomfort.\n3. Regular application on C-section stitches (once removed) can keep the skin moisturized and may help faster healing.\n4. The medium-chain triglycerides (MCTs) in coconut oil provide a quick, natural energy source for sleep deprived mothers.\n5. Can help lightening existing stretch marks over time.\n6. Massaging warm oil into the scalp can improve circulation and reduce protein loss, helping manage brittle postpartum hair.',
     howToUse: 'Apply generously on skin or hair. Can be used for cooking, oil pulling, or as a natural moisturizer for mother and baby.',
     shippingReturns: 'Orders are dispatched within 2–3 business days. Free shipping on orders above ₹999. Returns accepted within 7 days for unopened items.',
     variants: [
@@ -26,7 +28,8 @@ const FINAL_PRODUCTS = [
   },
   {
     name: 'Castor Oil', category: 'Cold Pressed Oil',
-    keyBenefits: 'Avoids Postpartum hair loss, improves circulation. Strengthens hair roots and promotes healthy regrowth.',
+    description: 'Castor oil is a versatile natural remedy for postpartum recovery, offering benefits ranging from skin and hair care to digestive support.\n\nIngredients: Organic Castor Oil',
+    keyBenefits: '1. Postpartum hair loss, often peaking at 3-5 months, is primarily hormonal. Castor oil, rich in ricinoleic acid, helps by conditioning the scalp, strengthening strands, and improving circulation.\n2. Helps in skin care and stretch mark as its deep-penetrating fatty acids hydrate dry skin common after hormonal shifts.\n3. Some traditional practices use castor oil packs over the breasts to help with blocked milk ducts or mastitis.',
     howToUse: 'Massage into scalp 2-3 times a week. Leave for at least 30 minutes before washing. Can also be applied on skin for hydration.',
     shippingReturns: 'Orders are dispatched within 2–3 business days. Free shipping on orders above ₹999. Returns accepted within 7 days for unopened items.',
     variants: [
@@ -39,7 +42,8 @@ const FINAL_PRODUCTS = [
   // ─── Organic Powders ───
   {
     name: 'Dry Ginger Powder', category: 'Organic Powders',
-    keyBenefits: 'Dry Ginger Powder is very beneficial during postpartum period for its warming and restorative properties. Supports digestion and reduces inflammation.',
+    description: 'Dry Ginger Powder is very beneficial during postpartum period for its warming and restorative properties. Clinical evidence suggests it is particularly effective as a natural galactagogue to boost early breast milk production.',
+    keyBenefits: '1. Studies show that consuming dried ginger (approximately 500 mg twice daily) can significantly increase breast milk volume in the immediate postpartum period, specifically within the first 72 hours after delivery.\n2. Ginger stimulates digestive enzymes, helping to alleviate common postpartum issues like bloating, gas, and constipation.\n3. Its active compounds, gingerols and shogaols, act as natural anti-inflammatories to reduce postpartum swelling, muscle pain, and joint stiffness.\n4. Traditional practices use ginger to help the uterus contract and manage uterine bleeding post-delivery.',
     howToUse: 'Add half a teaspoon to warm water, milk, or food. Ideal in postpartum kashayams, soups, and herbal drinks.',
     shippingReturns: 'Orders are dispatched within 2–3 business days. Free shipping on orders above ₹999. Returns accepted within 7 days for unopened items.',
     variants: [
@@ -52,7 +56,8 @@ const FINAL_PRODUCTS = [
   },
   {
     name: 'Dry Garlic Powder', category: 'Organic Powders',
-    keyBenefits: 'Dry Garlic Powder supports lactation and general healing. Has natural antibacterial properties and boosts immunity.',
+    description: 'Dry Garlic Powder supports lactation and general healing. Garlic is widely used in countries like India and Turkey to stimulate breast milk production. Studies suggest that its flavour, which peaks in breast milk about 2 hours after consumption, may encourage infants to nurse more vigorously and stay attached longer, which naturally signals the body to produce more milk.',
+    keyBenefits: '1. Traditional practices often include garlic to help "heal the wound" (especially after childbirth) and restore bodily equilibrium.\n2. Contains allicin, a bioactive compound with antibacterial, antiviral, and anti-inflammatory properties that can assist in overall recovery.\n3. Natural immunity booster rich in antioxidants. Its metabolites can enter breast milk, potentially helping to strengthen the baby\'s developing immune system.\n4. Even in its dehydrated powder form, garlic retains essential nutrients like Vitamin B6, Vitamin C, Manganese, and Selenium.',
     howToUse: 'Sprinkle on food or add to warm water. Use in postpartum soups, dals, and rasam for enhanced flavor and health benefits.',
     shippingReturns: 'Orders are dispatched within 2–3 business days. Free shipping on orders above ₹999. Returns accepted within 7 days for unopened items.',
     variants: [
@@ -336,8 +341,9 @@ async function seedVariants() {
            e.slug === slug
     );
 
+    const totalStock = prod.variants.reduce((s, v) => s + v.stockQuantity, 0);
+
     if (existing) {
-      // Update existing product
       console.log(`  Updating existing product: "${prod.name}"`);
       await prisma.product.update({
         where: { id: existing.id },
@@ -346,7 +352,9 @@ async function seedVariants() {
           title: prod.name,
           category: prod.category,
           price: lowestPrice,
+          stockQuantity: totalStock,
           isActive: true,
+          ...(prod.description && { description: prod.description }),
           keyBenefits: prod.keyBenefits,
           howToUse: prod.howToUse,
           shippingReturns: prod.shippingReturns,
@@ -377,8 +385,9 @@ async function seedVariants() {
           title: prod.name,
           slug,
           price: lowestPrice,
+          stockQuantity: totalStock,
           category: prod.category,
-          description: '',
+          description: prod.description || '',
           isActive: true,
           keyBenefits: prod.keyBenefits,
           howToUse: prod.howToUse,

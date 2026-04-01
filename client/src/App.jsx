@@ -23,6 +23,8 @@ import About from './pages/About';
 import FAQ from './pages/FAQ';
 import ReturnPolicy from './pages/ReturnPolicy';
 import ResetPassword from './pages/ResetPassword';
+import Checkout from './pages/Checkout';
+import Partnership from './pages/Partnership';
 
 import './styles/globals.css';
 
@@ -45,6 +47,7 @@ function AppShell() {
         <Route path="/products"      element={<Products />} />
         <Route path="/products/:id"  element={<ProductDetail />} />
         <Route path="/cart"          element={<Cart />} />
+        <Route path="/checkout"     element={<Checkout />} />
         <Route path="/services"      element={<Services />} />
         <Route path="/blog"          element={<Blog />} />
         <Route path="/blog/:id"      element={<BlogPost />} />
@@ -57,6 +60,7 @@ function AppShell() {
         <Route path="/faq"            element={<FAQ />} />
         <Route path="/return-policy"  element={<ReturnPolicy />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/partnership"  element={<Partnership />} />
       </Routes>
 
       <CommunityBanner />

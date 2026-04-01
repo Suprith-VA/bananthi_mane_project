@@ -12,8 +12,10 @@ export default function ProductCard({ product }) {
   const href = product.slug || id;
 
   const hasVariants = product.variants?.length > 0;
-  const defaultVariant = hasVariants ? product.variants[0] : null;
-  const displayPrice = defaultVariant?.price ?? product.price;
+  const lowestVariant = hasVariants
+    ? product.variants.reduce((min, v) => (v.price < min.price ? v : min), product.variants[0])
+    : null;
+  const displayPrice = lowestVariant?.price ?? product.price;
   const outOfStock = hasVariants
     ? product.variants.every(v => (v.stockQuantity ?? 0) === 0)
     : (product.stockQuantity ?? product.stock ?? 1) === 0;
@@ -21,9 +23,9 @@ export default function ProductCard({ product }) {
   const handleAdd = () => {
     addToCart({
       productId: id,
-      variantId: defaultVariant?._id || defaultVariant?.id || null,
+      variantId: lowestVariant?._id || lowestVariant?.id || null,
       name,
-      unitLabel: defaultVariant?.unitLabel || null,
+      unitLabel: lowestVariant?.unitLabel || null,
       price: displayPrice,
       image,
     });

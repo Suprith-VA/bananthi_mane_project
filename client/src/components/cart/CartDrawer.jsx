@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import './CartDrawer.css';
 
 export default function CartDrawer() {
   const { cart, addToCart, removeOne, removeAll, totalItems, totalPrice, isOpen, setIsOpen } = useCart();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -52,7 +54,7 @@ export default function CartDrawer() {
             <span>Rs. {totalPrice.toFixed(2)}</span>
           </div>
           <p className="cart-note">Taxes and shipping calculated at checkout.</p>
-          <button className="btn" style={{ width: '100%' }} onClick={() => alert('Proceeding to secure checkout...')}>
+          <button className="btn" style={{ width: '100%' }} onClick={() => { setIsOpen(false); navigate('/checkout'); }}>
             Check out
           </button>
         </div>

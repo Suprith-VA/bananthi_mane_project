@@ -1,9 +1,10 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import './Cart.css';
 
 export default function Cart() {
   const { cart, addToCart, removeOne, removeAll, totalItems, totalPrice } = useCart();
+  const navigate = useNavigate();
 
   return (
     <main className="page-enter cart-page">
@@ -50,7 +51,7 @@ export default function Cart() {
               <span>Rs. {totalPrice.toFixed(2)}</span>
             </div>
             <p>Taxes and shipping calculated at checkout.</p>
-            <button className="btn" onClick={() => alert('Proceeding to secure checkout...')}>
+            <button className="btn" onClick={() => navigate('/checkout')}>
               Check out
             </button>
           </div>

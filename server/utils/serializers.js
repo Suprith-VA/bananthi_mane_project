@@ -58,6 +58,7 @@ export function serializeOrder(order) {
     shippingAddress: order.shippingAddress,
     paymentInfo: {
       razorpayOrderId: order.razorpayOrderId,
+      razorpayPaymentId: order.razorpayPaymentId,
       paymentMethod: order.paymentMethod,
       paymentStatus: order.paymentStatus,
     },

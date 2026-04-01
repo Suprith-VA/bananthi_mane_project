@@ -1,6 +1,7 @@
 import prisma from '../config/prisma.js';
 import { serializeSubscriber } from '../utils/serializers.js';
 import { isValidUUID } from '../utils/helpers.js';
+import { sendContactFormEmail, sendPostpartumServiceEmail } from '../services/emailService.js';
 
 // POST /api/subscribe
 export const subscribe = async (req, res) => {
@@ -91,6 +92,56 @@ export const adminBroadcast = async (req, res) => {
       recipientCount: subscribers.length,
       recipientsPreview: subscribers.slice(0, 10),
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// POST /api/contact
+export const submitContactForm = async (req, res) => {
+  try {
+    const { name, email, phone, message } = req.body;
+    if (!name?.trim() || name.trim().length < 2) return res.status(400).json({ message: 'Name must be at least 2 characters' });
+    if (!email?.trim()) return res.status(400).json({ message: 'Email is required' });
+    if (!message?.trim() || message.trim().length < 10) return res.status(400).json({ message: 'Message must be at least 10 characters' });
+
+    // Fire-and-forget email
+    sendContactFormEmail({ name: name.trim(), email: email.trim(), phone: phone?.trim() || '', message: message.trim() })
+      .catch(err => console.error('[Contact email error]', err.message));
+
+    res.status(200).json({ message: 'Message sent successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// POST /api/services-waitlist
+export const submitServiceWaitlist = async (req, res) => {
+  try {
+    const { firstName, lastName, email, dueDate, interest } = req.body;
+    if (!firstName?.trim()) return res.status(400).json({ message: 'First name is required' });
+    if (!lastName?.trim()) return res.status(400).json({ message: 'Last name is required' });
+    if (!email?.trim()) return res.status(400).json({ message: 'Email is required' });
+
+    // Also subscribe them
+    const normalizedEmail = email.toLowerCase().trim();
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
+    await prisma.subscriber.upsert({
+      where: { email: normalizedEmail },
+      update: { name: fullName, isActive: true },
+      create: { email: normalizedEmail, name: fullName, isActive: true, source: 'services-waitlist' },
+    });
+
+    // Send email to sales
+    sendPostpartumServiceEmail({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: normalizedEmail,
+      dueDate: dueDate || '',
+      interest: interest?.trim() || '',
+    }).catch(err => console.error('[Service waitlist email error]', err.message));
+
+    res.status(200).json({ message: 'Registration successful' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

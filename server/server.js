@@ -12,6 +12,9 @@ import blogRoutes from './routes/blogRoutes.js';
 import marketingRoutes from './routes/marketingRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import shiprocketRoutes from './routes/shiprocketRoutes.js';
+import partnershipRoutes from './routes/partnershipRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,7 +36,10 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/blogs', blogRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/shiprocket', shiprocketRoutes);
 app.use('/api', marketingRoutes);
+app.use('/api/partnership', partnershipRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
 

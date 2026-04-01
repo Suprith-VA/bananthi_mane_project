@@ -9,6 +9,7 @@ import {
   syncNameFields,
   syncRoleAdmin,
 } from '../utils/helpers.js';
+import { sendNewUserRegistrationEmail, sendPasswordResetEmail } from '../services/emailService.js';
 
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -58,6 +59,13 @@ export const registerUser = async (req, res) => {
     });
 
     res.status(201).json(toAuthPayload(user));
+
+    // Send new user registration notification to sales (fire-and-forget)
+    sendNewUserRegistrationEmail({
+      name: computedName,
+      email: user.email,
+      phone: phone || '',
+    }).catch(err => console.error('[Registration email error]', err.message));
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -148,10 +156,15 @@ export const forgotPassword = async (req, res) => {
     const baseUrl = process.env.CLIENT_URL || 'http://localhost:5173';
     const resetUrl = `${baseUrl}/reset-password/${raw}`;
 
-    res.json({
-      message: 'Password reset token generated. Email integration is not configured yet.',
-      resetToken: raw,
+    // Send password reset email to the customer
+    sendPasswordResetEmail({
+      email: user.email,
+      name: user.name || user.firstName || '',
       resetUrl,
+    }).catch(err => console.error('[Password reset email error]', err.message));
+
+    res.json({
+      message: 'If this email is registered, a password reset link has been sent.',
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

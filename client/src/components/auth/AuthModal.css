@@ -176,6 +176,21 @@
 .pw-ok { background: #d4edda; color: #155724; }
 .pw-bad { background: #f8d7da; color: #721c24; }
 
+/* Forgot password success */
+.auth-forgot-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 1rem 0;
+}
+
+.auth-forgot-success-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+
 @media (min-width: 768px) {
   .auth-modal { padding: 50px 40px; }
   .auth-header { font-size: 32px; }

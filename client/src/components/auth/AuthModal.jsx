@@ -50,12 +50,14 @@ export default function AuthModal({ isOpen, onClose }) {
   const [newsletter, setNewsletter] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
 
   // Clear password every time the modal opens or closes
   useEffect(() => {
     setPassword('');
     setShowPassword(false);
     setError('');
+    setForgotSent(false);
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -102,7 +104,60 @@ export default function AuthModal({ isOpen, onClose }) {
     setEmail('');
     setPassword('');
     setShowPassword(false);
+    setForgotSent(false);
   };
+
+  const handleForgotPassword = async () => {
+    if (!email || !EMAIL_RE.test(email)) {
+      setError('Please enter a valid email address first.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Request failed');
+      setForgotSent(true);
+    } catch (err) {
+      if (err.message?.toLowerCase().includes('not found') || err.message?.toLowerCase().includes('not registered')) {
+        setError('No account found with this email. Please create an account.');
+        setIsLogin(false);
+      } else {
+        setError(err.message || 'Request failed');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Forgot password success state — shown inside the modal
+  if (forgotSent) {
+    return (
+      <div className="auth-overlay" onClick={onClose}>
+        <div className="auth-modal" onClick={e => e.stopPropagation()}>
+          <button className="close-auth" onClick={onClose}>×</button>
+          <div className="auth-forgot-success">
+            <div className="auth-forgot-success-icon">✉️</div>
+            <h2 className="auth-header" style={{ textAlign: 'center' }}>Check Your Email</h2>
+            <p className="auth-subtitle" style={{ textAlign: 'center' }}>
+              If <strong>{email}</strong> is registered with us, you'll receive a password reset link shortly. Please check your inbox and spam folder.
+            </p>
+            <button
+              className="btn auth-submit-btn"
+              onClick={() => { setForgotSent(false); }}
+            >
+              Back to Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-overlay" onClick={onClose}>
@@ -191,39 +246,7 @@ export default function AuthModal({ isOpen, onClose }) {
 
         {isLogin && (
           <div className="auth-forgot">
-            <span onClick={async () => {
-              if (!email || !EMAIL_RE.test(email)) {
-                setError('Please enter a valid email address first.');
-                return;
-              }
-              setLoading(true);
-              setError('');
-              try {
-                const res = await fetch('/api/auth/forgot-password', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email }),
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.message || 'Request failed');
-
-                if (data.resetUrl) {
-                  setError('');
-                  alert(`A password reset link has been generated.\n\n${data.resetUrl}\n\n(Email delivery will be enabled before deployment.)`);
-                } else {
-                  setError(data.message || 'If this email is registered, you will receive a reset link.');
-                }
-              } catch (err) {
-                if (err.message?.toLowerCase().includes('not found') || err.message?.toLowerCase().includes('not registered')) {
-                  setError('No account found with this email. Please create an account.');
-                  setIsLogin(false);
-                } else {
-                  setError(err.message || 'Request failed');
-                }
-              } finally {
-                setLoading(false);
-              }
-            }}>
+            <span onClick={handleForgotPassword}>
               Forgot password?
             </span>
           </div>

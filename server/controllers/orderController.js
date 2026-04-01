@@ -1,6 +1,21 @@
 import prisma from '../config/prisma.js';
 import { serializeOrder } from '../utils/serializers.js';
 import { isValidUUID, fulfillmentToStatus } from '../utils/helpers.js';
+import { sendOrderConfirmationEmail, sendOrderStatusChangeEmail, sendLowStockAlertEmail, sendCustomerOrderConfirmationEmail, sendCustomerShippingUpdateEmail } from '../services/emailService.js';
+
+async function syncProductStock(tx, productId) {
+  const agg = await tx.productVariant.aggregate({
+    where: { productId },
+    _sum: { stockQuantity: true },
+    _count: true,
+  });
+  if (agg._count > 0) {
+    await tx.product.update({
+      where: { id: productId },
+      data: { stockQuantity: agg._sum.stockQuantity ?? 0 },
+    });
+  }
+}
 
 // POST /api/orders
 export const createOrder = async (req, res) => {
@@ -80,21 +95,19 @@ export const createOrder = async (req, res) => {
         include: { items: true, user: { select: { id: true, name: true, email: true, phone: true } } },
       });
 
-      // Decrement stock — prefer variant stock when available
       for (const item of created.items) {
-        if (item.productId) {
-          // Find matching variant by unitLabel
-          if (item.unitLabel) {
-            const variant = await tx.productVariant.findFirst({
-              where: { productId: item.productId, unitLabel: item.unitLabel },
+        if (!item.productId) continue;
+        if (item.unitLabel) {
+          const variant = await tx.productVariant.findFirst({
+            where: { productId: item.productId, unitLabel: item.unitLabel },
+          });
+          if (variant) {
+            await tx.productVariant.update({
+              where: { id: variant.id },
+              data: { stockQuantity: { decrement: item.quantity } },
             });
-            if (variant) {
-              await tx.productVariant.update({
-                where: { id: variant.id },
-                data: { stockQuantity: { decrement: item.quantity } },
-              });
-            }
           }
+        } else {
           await tx.product.update({
             where: { id: item.productId },
             data: { stockQuantity: { decrement: item.quantity } },
@@ -102,8 +115,36 @@ export const createOrder = async (req, res) => {
         }
       }
 
+      const affectedIds = [...new Set(created.items.filter(i => i.productId).map(i => i.productId))];
+      for (const pid of affectedIds) {
+        await syncProductStock(tx, pid);
+      }
+
       return created;
     });
+
+    // Send order confirmation email to sales (fire-and-forget)
+    sendOrderConfirmationEmail(order)
+      .catch(err => console.error('[Order email error]', err.message));
+
+    // Send order confirmation email to customer (fire-and-forget)
+    sendCustomerOrderConfirmationEmail(order)
+      .catch(err => console.error('[Customer order email error]', err.message));
+
+    // Check for low stock alerts
+    for (const item of order.items) {
+      if (!item.productId) continue;
+      if (item.unitLabel) {
+        const variant = await prisma.productVariant.findFirst({
+          where: { productId: item.productId, unitLabel: item.unitLabel },
+        });
+        if (variant && variant.stockQuantity <= 5) {
+          const prod = await prisma.product.findUnique({ where: { id: item.productId }, select: { name: true } });
+          sendLowStockAlertEmail(prod?.name || item.name, item.unitLabel, variant.stockQuantity)
+            .catch(err => console.error('[Low stock email error]', err.message));
+        }
+      }
+    }
 
     res.status(201).json(serializeOrder(order));
   } catch (error) {
@@ -168,49 +209,55 @@ export const getAllOrders = async (req, res) => {
   }
 };
 
-// Helper: restore stock for an order's items (used when cancelling)
 async function restoreStock(tx, items) {
   for (const item of items) {
-    if (item.productId) {
-      if (item.unitLabel) {
-        const variant = await tx.productVariant.findFirst({
-          where: { productId: item.productId, unitLabel: item.unitLabel },
+    if (!item.productId) continue;
+    if (item.unitLabel) {
+      const variant = await tx.productVariant.findFirst({
+        where: { productId: item.productId, unitLabel: item.unitLabel },
+      });
+      if (variant) {
+        await tx.productVariant.update({
+          where: { id: variant.id },
+          data: { stockQuantity: { increment: item.quantity } },
         });
-        if (variant) {
-          await tx.productVariant.update({
-            where: { id: variant.id },
-            data: { stockQuantity: { increment: item.quantity } },
-          });
-        }
       }
+    } else {
       await tx.product.update({
         where: { id: item.productId },
         data: { stockQuantity: { increment: item.quantity } },
       });
     }
   }
+  const pids = [...new Set(items.filter(i => i.productId).map(i => i.productId))];
+  for (const pid of pids) {
+    await syncProductStock(tx, pid);
+  }
 }
 
-// Helper: deduct stock for an order's items (used when reactivating a cancelled order)
 async function deductStock(tx, items) {
   for (const item of items) {
-    if (item.productId) {
-      if (item.unitLabel) {
-        const variant = await tx.productVariant.findFirst({
-          where: { productId: item.productId, unitLabel: item.unitLabel },
+    if (!item.productId) continue;
+    if (item.unitLabel) {
+      const variant = await tx.productVariant.findFirst({
+        where: { productId: item.productId, unitLabel: item.unitLabel },
+      });
+      if (variant) {
+        await tx.productVariant.update({
+          where: { id: variant.id },
+          data: { stockQuantity: { decrement: item.quantity } },
         });
-        if (variant) {
-          await tx.productVariant.update({
-            where: { id: variant.id },
-            data: { stockQuantity: { decrement: item.quantity } },
-          });
-        }
       }
+    } else {
       await tx.product.update({
         where: { id: item.productId },
         data: { stockQuantity: { decrement: item.quantity } },
       });
     }
+  }
+  const pids = [...new Set(items.filter(i => i.productId).map(i => i.productId))];
+  for (const pid of pids) {
+    await syncProductStock(tx, pid);
   }
 }
 
@@ -280,6 +327,15 @@ export const updateOrderStatus = async (req, res) => {
     });
 
     res.json(serializeOrder(order));
+
+    // Send status change email (fire-and-forget)
+    if (fulfillmentStatus && fulfillmentStatus !== existing.fulfillmentStatus) {
+      sendOrderStatusChangeEmail(order, fulfillmentStatus)
+        .catch(err => console.error('[Status change email error]', err.message));
+      // Send shipping update to customer
+      sendCustomerShippingUpdateEmail(order, fulfillmentStatus)
+        .catch(err => console.error('[Customer shipping email error]', err.message));
+    }
   } catch (error) {
     if (error.code === 'P2025') {
       return res.status(404).json({ message: 'Order not found' });

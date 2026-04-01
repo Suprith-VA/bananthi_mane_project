@@ -4,6 +4,20 @@ import { isValidUUID, toSlug } from '../utils/helpers.js';
 
 const INCLUDE_VARIANTS = { variants: { orderBy: { sortOrder: 'asc' } } };
 
+async function syncProductStockFromVariants(productId) {
+  const agg = await prisma.productVariant.aggregate({
+    where: { productId },
+    _sum: { stockQuantity: true },
+    _count: true,
+  });
+  if (agg._count > 0) {
+    await prisma.product.update({
+      where: { id: productId },
+      data: { stockQuantity: agg._sum.stockQuantity ?? 0 },
+    });
+  }
+}
+
 // GET /api/products
 export const getProducts = async (req, res) => {
   try {
@@ -82,9 +96,21 @@ export const createProduct = async (req, res) => {
     if (resolvedPrice == null) return res.status(400).json({ message: 'Price is required (or provide at least one variant)' });
 
     const resolvedSlug = slug || toSlug(resolvedTitle);
-    const resolvedStock = stockQuantity ?? stock ?? 100;
     const resolvedImages = images?.length ? images : image ? [image] : [];
     const resolvedImage = image || (images?.[0] ?? '/images/main.png');
+
+    const variantData = hasVariants
+      ? variants.map((v, i) => ({
+          unitLabel: v.unitLabel,
+          price: v.price,
+          stockQuantity: v.stockQuantity ?? 50,
+          sortOrder: v.sortOrder ?? i,
+        }))
+      : [];
+
+    const resolvedStock = hasVariants
+      ? variantData.reduce((sum, v) => sum + v.stockQuantity, 0)
+      : (stockQuantity ?? stock ?? 100);
 
     const product = await prisma.product.create({
       data: {
@@ -103,14 +129,7 @@ export const createProduct = async (req, res) => {
         howToUse: howToUse || '',
         shippingReturns: shippingReturns || '',
         ...(hasVariants && {
-          variants: {
-            create: variants.map((v, i) => ({
-              unitLabel: v.unitLabel,
-              price: v.price,
-              stockQuantity: v.stockQuantity ?? 50,
-              sortOrder: v.sortOrder ?? i,
-            })),
-          },
+          variants: { create: variantData },
         }),
       },
       include: INCLUDE_VARIANTS,
@@ -139,35 +158,29 @@ export const updateProduct = async (req, res) => {
     if (data.title && !data.name) data.name = data.title;
     if (data.name && !data.title) data.title = data.name;
     if (data.title && !data.slug) data.slug = toSlug(data.title);
-    if (typeof data.stockQuantity === 'number' && typeof data.stock !== 'number') {
-      data.stock = data.stockQuantity;
-    }
-    if (typeof data.stock === 'number' && typeof data.stockQuantity !== 'number') {
-      data.stockQuantity = data.stock;
-    }
 
     delete data.stock;
+    delete data.stockQuantity;
     delete data._id;
     delete data.id;
 
-    // If variants supplied, sync the display price to the lowest variant
     if (Array.isArray(variants)) {
+      const variantData = variants.map((v, i) => ({
+        productId: id,
+        unitLabel: v.unitLabel,
+        price: v.price,
+        stockQuantity: v.stockQuantity ?? 50,
+        sortOrder: v.sortOrder ?? i,
+      }));
+
       if (variants.length > 0) {
         data.price = Math.min(...variants.map(v => v.price));
+        data.stockQuantity = variantData.reduce((sum, v) => sum + v.stockQuantity, 0);
       }
 
-      // Replace all variants: delete old, create new
       await prisma.productVariant.deleteMany({ where: { productId: id } });
-      if (variants.length > 0) {
-        await prisma.productVariant.createMany({
-          data: variants.map((v, i) => ({
-            productId: id,
-            unitLabel: v.unitLabel,
-            price: v.price,
-            stockQuantity: v.stockQuantity ?? 50,
-            sortOrder: v.sortOrder ?? i,
-          })),
-        });
+      if (variantData.length > 0) {
+        await prisma.productVariant.createMany({ data: variantData });
       }
     }
 
@@ -177,7 +190,12 @@ export const updateProduct = async (req, res) => {
       include: INCLUDE_VARIANTS,
     });
 
-    res.json(serializeProduct(product));
+    if (Array.isArray(variants)) {
+      await syncProductStockFromVariants(id);
+    }
+
+    const refreshed = await prisma.product.findUnique({ where: { id }, include: INCLUDE_VARIANTS });
+    res.json(serializeProduct(refreshed));
   } catch (error) {
     if (error.code === 'P2025') {
       return res.status(404).json({ message: 'Product not found' });
