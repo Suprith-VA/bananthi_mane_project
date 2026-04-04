@@ -34,6 +34,10 @@ Changes.md
 Requirement_Specification.txt
 todo.text
 payments_shipping_stock_sync_83969fd9.plan.md
+
+# Old ad-hoc test case files (replaced by tests/ directory)
 TestCases_Changes5.md
 TestCases_Changes5_CLEAR.md
 MANUAL_TESTCASES_FROM_CHAT.md
+TestCases_QUICK_REFERENCE.md
+TEST_DOCUMENTATION_SUMMARY.md

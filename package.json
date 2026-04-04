@@ -1,0 +1,16 @@
+{
+  "name": "bananthi-mane",
+  "version": "1.0.0",
+  "description": "Bananthi Mane – monorepo root (test runner)",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "npm run test:api",
+    "test:api": "vitest run --reporter=verbose",
+    "test:watch": "vitest --reporter=verbose",
+    "seed": "cd server && node scripts/seedTestUsers.js"
+  },
+  "devDependencies": {
+    "vitest": "^1.6.1"
+  }
+}
