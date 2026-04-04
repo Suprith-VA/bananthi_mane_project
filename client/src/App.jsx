@@ -25,6 +25,9 @@ import ReturnPolicy from './pages/ReturnPolicy';
 import ResetPassword from './pages/ResetPassword';
 import Checkout from './pages/Checkout';
 import Partnership from './pages/Partnership';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsConditions from './pages/TermsConditions';
+import ShippingPolicy from './pages/ShippingPolicy';
 
 import './styles/globals.css';
 
@@ -47,20 +50,24 @@ function AppShell() {
         <Route path="/products"      element={<Products />} />
         <Route path="/products/:id"  element={<ProductDetail />} />
         <Route path="/cart"          element={<Cart />} />
-        <Route path="/checkout"     element={<Checkout />} />
+        <Route path="/checkout"      element={<Checkout />} />
         <Route path="/services"      element={<Services />} />
         <Route path="/blog"          element={<Blog />} />
         <Route path="/blog/:id"      element={<BlogPost />} />
         <Route path="/contact"       element={<Contact />} />
         <Route path="/admin"         element={<AdminDashboard />} />
-        <Route path="/profile"        element={<Profile />} />
-        <Route path="/orders"         element={<OrderHistory />} />
-        <Route path="/track-order"    element={<TrackOrder />} />
-        <Route path="/about"          element={<About />} />
-        <Route path="/faq"            element={<FAQ />} />
-        <Route path="/return-policy"  element={<ReturnPolicy />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-        <Route path="/partnership"  element={<Partnership />} />
+        <Route path="/profile"       element={<Profile />} />
+        <Route path="/orders"        element={<OrderHistory />} />
+        <Route path="/track-order"   element={<TrackOrder />} />
+        <Route path="/about"         element={<About />} />
+        <Route path="/faq"           element={<FAQ />} />
+        <Route path="/return-policy"              element={<ReturnPolicy />} />
+        <Route path="/cancellation-refund-policy" element={<ReturnPolicy />} />
+        <Route path="/privacy-policy"             element={<PrivacyPolicy />} />
+        <Route path="/terms-conditions"           element={<TermsConditions />} />
+        <Route path="/shipping-policy"            element={<ShippingPolicy />} />
+        <Route path="/reset-password/:token"      element={<ResetPassword />} />
+        <Route path="/partnership"   element={<Partnership />} />
       </Routes>
 
       <CommunityBanner />

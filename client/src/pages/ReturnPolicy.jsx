@@ -5,66 +5,61 @@ export default function ReturnPolicy() {
     <main className="static-page page-enter">
       <div className="static-header">
         <p className="static-label">Legal</p>
-        <h1>Return, Refund &amp; Cancellation Policy</h1>
-        <p className="static-subtitle">Last updated: {new Date().getFullYear()}</p>
+        <h1>Cancellation &amp; Refund Policy</h1>
+        <p className="static-subtitle">Last updated: 4 April 2026</p>
       </div>
 
       <div className="static-content policy-content">
         <section>
-          <h2>Overview</h2>
-          <p>
-            At Bananthi Mane, we maintain the highest standards of hygiene, safety, and quality for our postpartum
-            mothers and their babies. Because our catalog consists of consumable foods, herbal apothecary items, and
-            personal care products, <strong>all sales are final and non-returnable</strong>. We do not accept returns
-            or exchanges for opened or unused products due to a change of mind, taste preference, or subjective
-            dissatisfaction.
-          </p>
-        </section>
-
-        <section>
-          <h2>Exceptions: Damaged, Defective, or Incorrect Items</h2>
-          <p>We will happily issue a <strong>full refund or a free replacement</strong> only under the following circumstances:</p>
+          <h2>1. Order Cancellation</h2>
           <ul className="policy-list">
-            <li>The product delivered was physically damaged or spilled in transit.</li>
-            <li>The product delivered does not match your order.</li>
-            <li>The product delivered is past its expiry date.</li>
+            <li>
+              You can cancel an order before it is shipped by emailing{' '}
+              <a href="mailto:sales@bananthimane.com" className="link-green">sales@bananthimane.com</a>{' '}
+              with your Order ID.
+            </li>
+            <li>Once shipped, cancellation is not possible (you may request a return instead).</li>
           </ul>
         </section>
 
         <section>
-          <h2>How to Claim a Refund or Replacement</h2>
-          <ol className="policy-list">
-            <li>You must notify our Customer Care team within <strong>48 hours</strong> of receiving your delivery.</li>
-            <li>Please include your <strong>Order ID</strong> and attach clear unboxing photos or a video showing the damaged/incorrect product and the outer shipping box.</li>
-            <li>Once our team verifies the claim, we will initiate a reverse pickup (if required) and dispatch your replacement or process your refund immediately.</li>
-          </ol>
+          <h2>2. Returns</h2>
+          <ul className="policy-list">
+            <li>We accept returns within <strong>7 days</strong> of delivery for defective, damaged, or wrong items only.</li>
+            <li>Products must be unused, unwashed, in original packaging with tags intact.</li>
+            <li>
+              For hygiene reasons, we <strong>do not accept returns</strong> on: breast pump parts,
+              nipple shields, nursing bras (if worn), and opened baby skincare items.
+            </li>
+          </ul>
         </section>
 
         <section>
-          <h2>Cancellations</h2>
-          <div className="policy-highlight">
-            <div className="policy-highlight-item">
-              <h3>Before Dispatch</h3>
-              <p>You may cancel your order for a full refund as long as the order has not yet been packed and shipped. Please contact us immediately to request a cancellation.</p>
-            </div>
-            <div className="policy-highlight-item policy-highlight-warn">
-              <h3>After Dispatch</h3>
-              <p>Once an order has been handed over to our shipping partner and an AWB tracking number has been generated, the order <strong>cannot be cancelled or modified</strong>.</p>
-            </div>
-          </div>
+          <h2>3. Refunds</h2>
+          <ul className="policy-list">
+            <li>
+              Approved refunds are processed to the original payment method within{' '}
+              <strong>5–7 business days</strong> after we receive and inspect the return.
+            </li>
+            <li>COD refunds are issued via bank transfer/UPI.</li>
+            <li>Shipping charges are non-refundable.</li>
+          </ul>
         </section>
 
         <section>
-          <h2>Refund Processing Timeline</h2>
+          <h2>4. Exchanges</h2>
           <p>
-            Approved refunds for prepaid orders or cancelled orders will be credited back to your original method of
-            payment (via Razorpay) within <strong>5 to 7 business days</strong>, depending on your bank's processing time.
+            Size exchanges for maternity wear/nursing tops are allowed once, subject to stock availability
+            (customer bears return shipping).
           </p>
         </section>
 
         <section className="policy-contact">
-          <h2>Contact Us</h2>
-          <p>For any refund or return-related queries, please reach out to our Customer Care team via the <a href="/contact">Contact page</a>.</p>
+          <h2>5. Contact for Returns</h2>
+          <p>
+            Email <a href="mailto:sales@bananthimane.com">sales@bananthimane.com</a> with
+            subject &ldquo;Return Request – Order #[ID]&rdquo; and photos of the issue.
+          </p>
         </section>
       </div>
     </main>

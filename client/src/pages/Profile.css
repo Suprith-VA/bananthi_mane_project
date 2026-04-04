@@ -69,6 +69,8 @@
   gap: 0;
   border-bottom: 1px solid var(--border-color);
   margin-bottom: 2rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .profile-tabs button {
@@ -80,6 +82,8 @@
   color: #777;
   border-bottom: 3px solid transparent;
   transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .profile-tabs button.active,

@@ -843,7 +843,15 @@ export default function AdminDashboard() {
   const role = userInfo?.role || "user";
   const isSuperAdmin = role === "super-admin";
 
-  const [activeTab, setActiveTab] = useState("orders");
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      return sessionStorage.getItem("admin_active_tab") || "orders";
+    } catch { return "orders"; }
+  });
+
+  useEffect(() => {
+    try { sessionStorage.setItem("admin_active_tab", activeTab); } catch {}
+  }, [activeTab]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState(null);

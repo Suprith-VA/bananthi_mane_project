@@ -4,7 +4,7 @@ import './Footer.css';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('idle'); // idle | loading | success | error
+  const [status, setStatus] = useState('idle');
   const [msg, setMsg] = useState('');
 
   const handleNavClick = () => {
@@ -40,22 +40,30 @@ export default function Footer() {
             <img src="/logo.png" alt="Bananthi Mane Logo" className="footer-main-logo" />
             <img src="/name_logo.png" alt="Bananthi Mane" className="footer-name-logo" />
           </div>
-          <ul>
-            <li><span className="footer-heading">Navigate</span></li>
-            <li><Link to="/" onClick={handleNavClick}>Home</Link></li>
-            <li><Link to="/products" onClick={handleNavClick}>Products</Link></li>
-            <li><Link to="/services" onClick={handleNavClick}>Services</Link></li>
-            <li><Link to="/contact" onClick={handleNavClick}>Contact</Link></li>
-            <li><Link to="/track-order" onClick={handleNavClick}>Track Order</Link></li>
-          </ul>
-          <ul>
-            <li><span className="footer-heading">Company</span></li>
-            <li><Link to="/about" onClick={handleNavClick}>About Us</Link></li>
-            <li><Link to="/blog" onClick={handleNavClick}>Journal</Link></li>
-            <li><Link to="/return-policy" onClick={handleNavClick}>Return Policy</Link></li>
-            <li><Link to="/faq" onClick={handleNavClick}>Help &amp; FAQ</Link></li>
-            <li><Link to="/partnership" onClick={handleNavClick}>Sales &amp; Partnership</Link></li>
-          </ul>
+          <div className="footer-link-columns">
+            <ul>
+              <li><span className="footer-heading">Navigate</span></li>
+              <li><Link to="/" onClick={handleNavClick}>Home</Link></li>
+              <li><Link to="/products" onClick={handleNavClick}>Products</Link></li>
+              <li><Link to="/services" onClick={handleNavClick}>Services</Link></li>
+              <li><Link to="/contact" onClick={handleNavClick}>Contact Us</Link></li>
+              <li><Link to="/track-order" onClick={handleNavClick}>Track Order</Link></li>
+            </ul>
+            <ul>
+              <li><span className="footer-heading">Company</span></li>
+              <li><Link to="/about" onClick={handleNavClick}>About Us</Link></li>
+              <li><Link to="/blog" onClick={handleNavClick}>Journal</Link></li>
+              <li><Link to="/faq" onClick={handleNavClick}>Help &amp; FAQ</Link></li>
+              <li><Link to="/partnership" onClick={handleNavClick}>Sales &amp; Partnership</Link></li>
+            </ul>
+            <ul>
+              <li><span className="footer-heading">Legal</span></li>
+              <li><Link to="/privacy-policy" onClick={handleNavClick}>Privacy Policy</Link></li>
+              <li><Link to="/terms-conditions" onClick={handleNavClick}>Terms &amp; Conditions</Link></li>
+              <li><Link to="/cancellation-refund-policy" onClick={handleNavClick}>Cancellation &amp; Refund Policy</Link></li>
+              <li><Link to="/shipping-policy" onClick={handleNavClick}>Shipping &amp; Delivery Policy</Link></li>
+            </ul>
+          </div>
         </div>
 
         <div className="footer-signup">

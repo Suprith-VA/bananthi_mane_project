@@ -8,6 +8,8 @@ const SMTP_PORT = Number(process.env.SMTP_PORT) || 587;
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
 
+/* Routing: SALES_EMAIL = orders, contact form, services waitlist, status changes, etc.
+   ENQUIRY_EMAIL = partnership / vendor form only (sendPartnershipInquiryEmail). */
 const SALES_EMAIL = process.env.SALES_EMAIL || 'sales@bananthimane.com';
 const ENQUIRY_EMAIL = process.env.ENQUIRY_EMAIL || 'enquiry@bananthimane.com';
 

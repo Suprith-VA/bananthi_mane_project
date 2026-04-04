@@ -98,10 +98,10 @@ export async function api(method, path, body = null, token = null) {
 }
 
 /** Shorthand helpers */
-export const get  = (path, token)        => api("GET",    path, null, token);
-export const post = (path, body, token)  => api("POST",   path, body, token);
-export const put  = (path, body, token)  => api("PUT",    path, body, token);
-export const del  = (path, token)        => api("DELETE", path, null, token);
+export const get = (path, token) => api("GET", path, null, token);
+export const post = (path, body, token) => api("POST", path, body, token);
+export const put = (path, body, token) => api("PUT", path, body, token);
+export const del = (path, token) => api("DELETE", path, null, token);
 
 // ── Unique email helper ───────────────────────────────────────────────────────
 

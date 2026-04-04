@@ -570,6 +570,8 @@
 .policy-contact a:hover { color: var(--terracotta); }
 
 @media (max-width: 600px) {
-  .policy-highlight { grid-template-columns: 1fr; }
+  .policy-highlight { grid-template-columns: 1fr !important; }
   .static-cta { flex-direction: column; }
+  .static-header { padding: 40px 5% 30px; }
+  .static-content { padding: 2rem 5% 3rem; gap: 2rem; }
 }

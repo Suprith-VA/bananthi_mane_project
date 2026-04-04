@@ -201,7 +201,7 @@ router.post("/assign-awb/:orderId", protect, isSuperAdmin, async (req, res) => {
     // Step 1: Assign AWB
     const result = await assignAWB(order.shipmentId);
 
-    console.log("[Shiprocket AWB] Raw response:", JSON.stringify(result));
+    if (process.env.NODE_ENV !== 'production') console.log("[Shiprocket AWB] Raw response:", JSON.stringify(result));
 
     // Shiprocket returns awb_assign_status=0 on failure
     if (!result.awb_assign_status || result.awb_assign_status === 0) {
@@ -405,7 +405,7 @@ router.get("/track/:orderId", protect, isSuperAdmin, async (req, res) => {
 router.post("/webhook", async (req, res) => {
   try {
     const payload = req.body;
-    console.log("[Shiprocket Webhook] Received:", JSON.stringify(payload));
+    if (process.env.NODE_ENV !== 'production') console.log("[Shiprocket Webhook] Received:", JSON.stringify(payload));
 
     // Shiprocket sends: { order_id, sr_order_id, current_status, awb, ... }
     const srOrderId = String(payload.sr_order_id || payload.order_id || "");

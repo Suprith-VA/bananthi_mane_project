@@ -9,7 +9,7 @@ const TOKEN_TTL_MS = 9 * 24 * 60 * 60 * 1000;
 async function getToken() {
   if (cachedToken && Date.now() < tokenExpiresAt) return cachedToken;
 
-  console.log('[Shiprocket] Authenticating with', process.env.SHIPROCKET_EMAIL);
+  if (process.env.NODE_ENV !== 'production') console.log('[Shiprocket] Authenticating…');
 
   const res = await fetch(`${BASE_URL}/auth/login`, {
     method: 'POST',
@@ -41,7 +41,7 @@ async function shiprocketFetch(path, options = {}) {
   const url = `${BASE_URL}${path}`;
   const method = options.method || 'GET';
 
-  console.log(`[Shiprocket] ${method} ${url}`);
+  if (process.env.NODE_ENV !== 'production') console.log(`[Shiprocket] ${method} ${url}`);
 
   const res = await fetch(url, {
     ...options,
@@ -61,7 +61,7 @@ async function shiprocketFetch(path, options = {}) {
     throw new Error(`Shiprocket API error (${res.status}): ${typeof msg === 'object' ? JSON.stringify(msg) : msg}`);
   }
 
-  console.log(`[Shiprocket] Response:`, JSON.stringify(body, null, 2));
+  if (process.env.NODE_ENV !== 'production') console.log(`[Shiprocket] Response:`, JSON.stringify(body, null, 2));
   return body;
 }
 

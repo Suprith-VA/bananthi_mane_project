@@ -17,7 +17,7 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ message: 'Message must be at least 10 characters' });
     }
 
-    // Send email to enquiry@banantimane.com
+    // Send email to ENQUIRY_EMAIL (partnership inquiries only)
     await sendPartnershipInquiryEmail({
       companyName: companyName.trim(),
       contactPerson: contactPerson.trim(),

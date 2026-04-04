@@ -44,3 +44,4 @@ TEST_DOCUMENTATION_SUMMARY.md
 
 # Manual test plan (contains credentials and should not be in git)
 tests/MANUAL_TEST_PLAN.md
+DEPLOYMENT.md
