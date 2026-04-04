@@ -653,6 +653,175 @@ function OrderDetailModal({ order, onClose }) {
 /* ══════════════════════════════════════════════════════════════
    Role helpers
    ══════════════════════════════════════════════════════════════ */
+/* ═══ Generic Info / Confirm / Tracking Modals ═══ */
+function InfoModal({ title, message, type = "info", onClose }) {
+  const icons = { success: "✅", error: "❌", warning: "⚠️", info: "ℹ️" };
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h2>
+          {icons[type] || ""} {title}
+        </h2>
+        <div
+          style={{
+            margin: "1rem 0",
+            lineHeight: 1.7,
+            whiteSpace: "pre-wrap",
+            fontSize: "0.95rem",
+          }}
+        >
+          {message}
+        </div>
+        <div className="modal-actions">
+          <button className="action-btn" onClick={onClose}>
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmModal({ title, message, onConfirm, onCancel }) {
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <h2>{title}</h2>
+        <p style={{ margin: "1rem 0", lineHeight: 1.6, fontSize: "0.95rem" }}>
+          {message}
+        </p>
+        <div className="modal-actions">
+          <button className="btn-secondary" onClick={onCancel}>
+            Cancel
+          </button>
+          <button className="action-btn" onClick={onConfirm}>
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TrackingModal({ trackingData, onClose }) {
+  if (!trackingData) return null;
+  const { awbCode, courierName, currentStatus, activities } = trackingData;
+
+  const statusColor = (s) => {
+    if (!s) return "#888";
+    const u = s.toUpperCase();
+    if (u.includes("DELIVER")) return "#27ae60";
+    if (u.includes("TRANSIT") || u.includes("SHIPPED")) return "#2980b9";
+    if (u.includes("PICKUP")) return "#8e44ad";
+    if (u.includes("CANCEL") || u.includes("RTO") || u.includes("FAIL"))
+      return "#e74c3c";
+    return "#f39c12";
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal-content modal-wide"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2>📦 Shipment Tracking</h2>
+        <div className="order-detail-grid">
+          <div className="od-row">
+            <strong>AWB / Tracking No.</strong>
+            <span className="mono-cell">{awbCode}</span>
+          </div>
+          {courierName && (
+            <div className="od-row">
+              <strong>Courier</strong>
+              <span>{courierName}</span>
+            </div>
+          )}
+          <div className="od-row">
+            <strong>Current Status</strong>
+            <span
+              style={{
+                color: statusColor(currentStatus),
+                fontWeight: 600,
+                textTransform: "uppercase",
+              }}
+            >
+              {currentStatus || "Awaiting pickup"}
+            </span>
+          </div>
+        </div>
+
+        {activities && activities.length > 0 ? (
+          <>
+            <h3 style={{ margin: "1.2rem 0 0.6rem" }}>Tracking Timeline</h3>
+            <div
+              style={{
+                maxHeight: "300px",
+                overflowY: "auto",
+                borderLeft: "3px solid var(--brand-dark, #5a2d0c)",
+                paddingLeft: "1rem",
+                marginLeft: "0.5rem",
+              }}
+            >
+              {activities.map((a, i) => (
+                <div
+                  key={i}
+                  style={{
+                    marginBottom: "0.8rem",
+                    position: "relative",
+                    fontSize: "0.9rem",
+                  }}
+                >
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: "-1.45rem",
+                      top: "0.15rem",
+                      width: "10px",
+                      height: "10px",
+                      borderRadius: "50%",
+                      background:
+                        i === 0
+                          ? "var(--brand-dark, #5a2d0c)"
+                          : "var(--text-lighter, #bbb)",
+                    }}
+                  />
+                  <div style={{ fontWeight: i === 0 ? 600 : 400 }}>
+                    {a.activity || a["sr-status-label"] || a.status || "Update"}
+                  </div>
+                  <div
+                    style={{
+                      color: "var(--text-light, #888)",
+                      fontSize: "0.82rem",
+                    }}
+                  >
+                    {a.date} {a.location ? `— ${a.location}` : ""}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <p
+            style={{
+              fontSize: "0.9rem",
+              color: "var(--text-light, #888)",
+              margin: "1rem 0",
+            }}
+          >
+            No tracking activities yet. The shipment is awaiting courier pickup.
+          </p>
+        )}
+
+        <div className="modal-actions" style={{ marginTop: "1.5rem" }}>
+          <button className="btn-secondary" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const ADMIN_FULFILLMENT_OPTIONS = [
   "Processing",
   "Packed",
@@ -690,7 +859,12 @@ export default function AdminDashboard() {
   const [shiprocketOrder, setShiprocketOrder] = useState(null);
   const [paymentOrder, setPaymentOrder] = useState(null);
   const [viewingOrder, setViewingOrder] = useState(null);
-  const [pendingStatusChange, setPendingStatusChange] = useState(null); // { orderId, currentStatus, newStatus }
+  const [pendingStatusChange, setPendingStatusChange] = useState(null);
+
+  // Modal states for Shiprocket actions
+  const [infoModal, setInfoModal] = useState(null); // { title, message, type }
+  const [confirmModal, setConfirmModal] = useState(null); // { title, message, onConfirm }
+  const [trackingModal, setTrackingModal] = useState(null); // { awbCode, courierName, currentStatus, activities }
 
   const { get, mutate } = useAdminFetch(token);
 
@@ -802,92 +976,114 @@ export default function AdminDashboard() {
   };
 
   const handlePushToShiprocket = async (orderId) => {
-    if (
-      !confirm(
+    setConfirmModal({
+      title: "Push to Shiprocket",
+      message:
         "Push this order to Shiprocket? This will create the order in the Shiprocket dashboard.",
-      )
-    )
-      return;
-    try {
-      const result = await mutate(
-        `/api/shiprocket/push-order/${orderId}`,
-        "POST",
-      );
-      let msg = `✅ Pushed to Shiprocket!\nShiprocket Order ID: ${result.shiprocketOrderId}\nShipment ID: ${result.shipmentId}`;
-      if (
-        result.shiprocketStatus &&
-        String(result.shiprocketStatus).toUpperCase() === "CANCELED"
-      ) {
-        msg +=
-          '\n\n⚠️ WARNING: Shiprocket immediately cancelled this order.\nThis usually means:\n• The shipping address is invalid or not serviceable\n• The pickup location name does not match your Shiprocket account\nPlease verify the address and try again after clicking "X SR" to clear the data.';
-      } else {
-        msg +=
-          '\n\nNext step: Click the "AWB" button to assign a courier and get a tracking number.\nMake sure your Shiprocket wallet has at least ₹100 balance.';
-      }
-      alert(msg);
-      fetchOrders();
-    } catch (err) {
-      alert(`❌ Shiprocket push failed:\n${err.message}`);
-    }
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const result = await mutate(
+            `/api/shiprocket/push-order/${orderId}`,
+            "POST",
+          );
+          if (result.warning) {
+            setInfoModal({
+              title: "Order Pushed — Warning",
+              type: "warning",
+              message: `Shiprocket Order ID: ${result.shiprocketOrderId}\nShipment ID: ${result.shipmentId}\n\n⚠️ ${result.warning}\n\nUse "X SR" to clear and try again with valid address.`,
+            });
+          } else {
+            setInfoModal({
+              title: "Order Pushed to Shiprocket",
+              type: "success",
+              message: `Shiprocket Order ID: ${result.shiprocketOrderId}\nShipment ID: ${result.shipmentId}\n\nNext step: Click the "AWB" button to assign a courier and get a tracking number.\nMake sure your Shiprocket wallet has at least ₹100 balance.`,
+            });
+          }
+          fetchOrders();
+        } catch (err) {
+          setInfoModal({
+            title: "Shiprocket Push Failed",
+            type: "error",
+            message: err.message,
+          });
+        }
+      },
+    });
   };
 
   const handleAssignAWB = async (orderId) => {
-    if (
-      !confirm(
-        "Assign AWB and courier for this shipment?\n\nNote: Your Shiprocket wallet must have at least ₹100 balance.",
-      )
-    )
-      return;
-    try {
-      const result = await mutate(
-        `/api/shiprocket/assign-awb/${orderId}`,
-        "POST",
-      );
-      alert(
-        `✅ AWB Assigned Successfully!\nAWB / Tracking No.: ${result.awbCode}\nCourier: ${result.courierName}\n\nThe tracking number has been saved to this order.`,
-      );
-      fetchOrders();
-    } catch (err) {
-      alert(
-        `❌ AWB Assignment Failed:\n${err.message}\n\nCommon causes:\n• Shiprocket wallet balance below ₹100 — recharge at app.shiprocket.in\n• No courier serviceable for this pincode\n• Order was cancelled on Shiprocket (use "X SR" to reset and re-push)`,
-      );
-    }
+    setConfirmModal({
+      title: "Assign AWB & Schedule Pickup",
+      message:
+        "Assign AWB, request pickup from courier, and auto-update status to Shipped?\n\nNote: Your Shiprocket wallet must have at least ₹100 balance.",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const result = await mutate(
+            `/api/shiprocket/assign-awb/${orderId}`,
+            "POST",
+          );
+          setInfoModal({
+            title: "AWB Assigned & Pickup Requested",
+            type: "success",
+            message: `AWB / Tracking No.: ${result.awbCode}\nCourier: ${result.courierName}\nPickup: ${result.pickupStatus}\n\nThe order status has been updated to Shipped automatically.\nThe tracking number has been saved to this order.`,
+          });
+          fetchOrders();
+        } catch (err) {
+          setInfoModal({
+            title: "AWB Assignment Failed",
+            type: "error",
+            message: `${err.message}\n\nCommon causes:\n• Shiprocket wallet balance below ₹100 — recharge at app.shiprocket.in\n• No courier serviceable for this pincode\n• Order was cancelled on Shiprocket (use "X SR" to reset and re-push)`,
+          });
+        }
+      },
+    });
   };
 
   const handleCancelShiprocket = async (orderId) => {
-    if (
-      !confirm(
-        "Cancel this order on Shiprocket? This will clear all tracking data.",
-      )
-    )
-      return;
-    try {
-      await mutate(`/api/shiprocket/cancel/${orderId}`, "POST");
-      alert("Shiprocket order cancelled and tracking data cleared.");
-      fetchOrders();
-    } catch (err) {
-      alert(`Shiprocket cancel failed: ${err.message}`);
-    }
+    setConfirmModal({
+      title: "Cancel Shiprocket Order",
+      message:
+        "Cancel this order on Shiprocket? This will cancel the shipment, clear all tracking data, and restore stock.",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          await mutate(`/api/shiprocket/cancel/${orderId}`, "POST");
+          setInfoModal({
+            title: "Shiprocket Order Cancelled",
+            type: "success",
+            message:
+              "The order has been cancelled on Shiprocket, tracking data cleared, and stock has been restored.",
+          });
+          fetchOrders();
+          fetchProducts();
+        } catch (err) {
+          setInfoModal({
+            title: "Cancel Failed",
+            type: "error",
+            message: err.message,
+          });
+        }
+      },
+    });
   };
 
   const handleTrackShiprocket = async (orderId) => {
     try {
       const result = await get(`/api/shiprocket/track/${orderId}`);
-      const trackingInfo = result.tracking;
-      const activities =
-        trackingInfo?.tracking_data?.shipment_track_activities || [];
-      const status =
-        trackingInfo?.tracking_data?.shipment_status_text || "Unknown";
-      let msg = `AWB: ${result.awbCode}\nStatus: ${status}`;
-      if (activities.length > 0) {
-        msg += "\n\nRecent Activity:";
-        activities.slice(0, 5).forEach((a) => {
-          msg += `\n• ${a.date}: ${a.activity} (${a.location})`;
-        });
-      }
-      alert(msg);
+      setTrackingModal({
+        awbCode: result.awbCode,
+        courierName: result.courierName,
+        currentStatus: result.currentStatus,
+        activities: result.activities || [],
+      });
     } catch (err) {
-      alert(`Tracking failed: ${err.message}`);
+      setInfoModal({
+        title: "Tracking Failed",
+        type: "error",
+        message: err.message,
+      });
     }
   };
 
@@ -902,34 +1098,65 @@ export default function AdminDashboard() {
   };
 
   const handleCancelOrder = async (orderId) => {
-    if (!confirm("Cancel this order? Stock will be restored.")) return;
-    try {
-      await mutate(`/api/orders/${orderId}`, "DELETE");
-      fetchOrders();
-      // Silently refresh products so stock count is updated when admin switches to Products tab
-      fetchProducts();
-    } catch (err) {
-      alert(err.message);
-    }
+    setConfirmModal({
+      title: "Cancel Order",
+      message:
+        "Cancel this order? Stock will be restored. If this order is on Shiprocket, please cancel it there first using the X SR button.",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          await mutate(`/api/orders/${orderId}`, "DELETE");
+          setInfoModal({
+            title: "Order Cancelled",
+            type: "success",
+            message: "The order has been cancelled and stock has been restored.",
+          });
+          fetchOrders();
+          fetchProducts();
+        } catch (err) {
+          setInfoModal({
+            title: "Cancel Failed",
+            type: "error",
+            message: err.message,
+          });
+        }
+      },
+    });
   };
 
   const handleSyncShiprocketStatuses = async () => {
     try {
       const result = await mutate("/api/shiprocket/sync-statuses", "POST");
       if (result.updated > 0) {
-        alert(
-          `Synced ${result.updated}/${result.total} orders from Shiprocket.\n\n` +
-            result.results
-              .filter((r) => r.to)
-              .map((r) => `${r.orderId.slice(0, 8)}... : ${r.from} → ${r.to}`)
-              .join("\n"),
-        );
+        const changes = result.results
+          .filter((r) => r.to)
+          .map((r) => `${r.orderId.slice(0, 8)}... : ${r.from} → ${r.to}`)
+          .join("\n");
+        setInfoModal({
+          title: "Shiprocket Sync Complete",
+          type: "success",
+          message: `Updated ${result.updated} of ${result.total} orders:\n\n${changes}`,
+        });
       } else {
-        alert(result.message || "All orders are already up to date.");
+        const details = result.results
+          ?.map(
+            (r) =>
+              `${r.orderId?.slice(0, 8)}... : ${r.currentStatus || r.from || "—"} (SR: ${r.shiprocketStatus || "—"})`,
+          )
+          .join("\n");
+        setInfoModal({
+          title: "Shiprocket Sync",
+          type: "info",
+          message: `${result.message || "All orders are already up to date."}${details ? `\n\n${details}` : ""}`,
+        });
       }
       fetchOrders();
     } catch (err) {
-      alert(`Sync failed: ${err.message}`);
+      setInfoModal({
+        title: "Sync Failed",
+        type: "error",
+        message: err.message,
+      });
     }
   };
 
@@ -1164,7 +1391,7 @@ export default function AdminDashboard() {
                     {isSuperAdmin && (
                       <>
                         {!o.shiprocketOrderId &&
-                          o.fulfillmentStatus !== "Cancelled" && (
+                          (o.fulfillmentStatus === "Packed") && (
                             <button
                               className="action-btn action-btn-sm"
                               onClick={() => handlePushToShiprocket(o._id)}
@@ -1191,7 +1418,8 @@ export default function AdminDashboard() {
                             Track
                           </button>
                         )}
-                        {o.shiprocketOrderId && (
+                        {o.shiprocketOrderId &&
+                          o.fulfillmentStatus !== "Delivered" && (
                           <button
                             className="action-btn action-btn-sm action-btn-danger"
                             onClick={() => handleCancelShiprocket(o._id)}
@@ -1622,6 +1850,31 @@ export default function AdminDashboard() {
         <OrderDetailModal
           order={viewingOrder}
           onClose={() => setViewingOrder(null)}
+        />
+      )}
+
+      {infoModal && (
+        <InfoModal
+          title={infoModal.title}
+          message={infoModal.message}
+          type={infoModal.type}
+          onClose={() => setInfoModal(null)}
+        />
+      )}
+
+      {confirmModal && (
+        <ConfirmModal
+          title={confirmModal.title}
+          message={confirmModal.message}
+          onConfirm={confirmModal.onConfirm}
+          onCancel={() => setConfirmModal(null)}
+        />
+      )}
+
+      {trackingModal && (
+        <TrackingModal
+          trackingData={trackingModal}
+          onClose={() => setTrackingModal(null)}
         />
       )}
 

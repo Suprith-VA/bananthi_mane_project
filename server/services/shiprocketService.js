@@ -123,10 +123,42 @@ export async function assignAWB(shipmentId) {
   });
 }
 
+/**
+ * Request pickup from courier after AWB is assigned.
+ * This is the CRITICAL missing step — without it orders sit in limbo on Shiprocket.
+ */
+export async function requestPickup(shipmentId) {
+  return shiprocketFetch('/courier/generate/pickup', {
+    method: 'POST',
+    body: JSON.stringify({ shipment_id: [Number(shipmentId)] }),
+  });
+}
+
+/**
+ * Generate shipping manifest (label) for a shipment.
+ */
+export async function generateManifest(shipmentId) {
+  return shiprocketFetch('/manifests/generate', {
+    method: 'POST',
+    body: JSON.stringify({ shipment_id: [Number(shipmentId)] }),
+  });
+}
+
 export async function cancelShiprocketOrder(orderIds) {
   return shiprocketFetch('/orders/cancel', {
     method: 'POST',
     body: JSON.stringify({ ids: Array.isArray(orderIds) ? orderIds : [orderIds] }),
+  });
+}
+
+/**
+ * Cancel assigned shipments by AWB codes.
+ * Must be called BEFORE cancelShiprocketOrder if AWB was already assigned.
+ */
+export async function cancelShipment(awbCodes) {
+  return shiprocketFetch('/orders/cancel/shipment/awbs', {
+    method: 'POST',
+    body: JSON.stringify({ awbs: Array.isArray(awbCodes) ? awbCodes : [awbCodes] }),
   });
 }
 
@@ -137,6 +169,9 @@ export async function trackShipment(awbCode) {
 export default {
   createShiprocketOrder,
   assignAWB,
+  requestPickup,
+  generateManifest,
   cancelShiprocketOrder,
+  cancelShipment,
   trackShipment,
 };

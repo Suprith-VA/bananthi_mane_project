@@ -2,6 +2,7 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import prisma from '../config/prisma.js';
 import { serializeOrder } from '../utils/serializers.js';
+import { sendOrderConfirmationEmail, sendCustomerOrderConfirmationEmail, sendLowStockAlertEmail } from '../services/emailService.js';
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -39,7 +40,7 @@ export const createRazorpayOrder = async (req, res) => {
       amount: Math.round(amount * 100), // paise
       currency: 'INR',
       receipt: `receipt_${Date.now()}`,
-      payment_capture: 1, // auto-capture — required for test sandbox to not leave payments in authorized state
+      payment_capture: 1,
     };
 
     const order = await razorpay.orders.create(options);
@@ -164,6 +165,30 @@ export const verifyAndCreateOrder = async (req, res) => {
 
       return created;
     });
+
+    // ── Email notifications (fire-and-forget) ──
+    // Send order confirmation to sales team
+    sendOrderConfirmationEmail(order)
+      .catch(err => console.error('[Razorpay → Sales email error]', err.message));
+
+    // Send order confirmation to customer
+    sendCustomerOrderConfirmationEmail(order)
+      .catch(err => console.error('[Razorpay → Customer email error]', err.message));
+
+    // Check for low stock alerts
+    for (const item of order.items) {
+      if (!item.productId) continue;
+      if (item.unitLabel) {
+        const variant = await prisma.productVariant.findFirst({
+          where: { productId: item.productId, unitLabel: item.unitLabel },
+        });
+        if (variant && variant.stockQuantity <= 5) {
+          const prod = await prisma.product.findUnique({ where: { id: item.productId }, select: { name: true } });
+          sendLowStockAlertEmail(prod?.name || item.name, item.unitLabel, variant.stockQuantity)
+            .catch(err => console.error('[Razorpay → Low stock email error]', err.message));
+        }
+      }
+    }
 
     res.status(201).json(serializeOrder(order));
   } catch (error) {

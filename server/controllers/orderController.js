@@ -381,7 +381,10 @@ export const cancelOrder = async (req, res) => {
     const { id } = req.params;
     const order = await prisma.order.findUnique({
       where: { id },
-      include: { items: true },
+      include: {
+        items: true,
+        user: { select: { id: true, name: true, email: true, phone: true } },
+      },
     });
 
     if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -400,6 +403,12 @@ export const cancelOrder = async (req, res) => {
         },
       });
     });
+
+    // ── Cancellation email notifications (fire-and-forget) ──
+    sendOrderStatusChangeEmail(order, 'Cancelled')
+      .catch(err => console.error('[Cancel → Sales email error]', err.message));
+    sendCustomerShippingUpdateEmail(order, 'Cancelled')
+      .catch(err => console.error('[Cancel → Customer email error]', err.message));
 
     res.json({ message: 'Order cancelled and stock restored' });
   } catch (error) {
