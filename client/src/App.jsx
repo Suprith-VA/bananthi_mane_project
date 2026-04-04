@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 
@@ -82,6 +83,7 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <AppShell />
+          <Analytics />
         </CartProvider>
       </AuthProvider>
     </BrowserRouter>
