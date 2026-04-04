@@ -41,3 +41,6 @@ TestCases_Changes5_CLEAR.md
 MANUAL_TESTCASES_FROM_CHAT.md
 TestCases_QUICK_REFERENCE.md
 TEST_DOCUMENTATION_SUMMARY.md
+
+# Manual test plan (contains credentials and should not be in git)
+tests/MANUAL_TEST_PLAN.md
