@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import prisma from '../config/prisma.js';
 import { serializeOrder } from '../utils/serializers.js';
 import { sendOrderConfirmationEmail, sendCustomerOrderConfirmationEmail, sendLowStockAlertEmail } from '../services/emailService.js';
+import { verifyPrices } from './orderController.js';
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -25,7 +26,11 @@ async function syncProductStock(tx, productId) {
 
 // GET /api/payments/config — expose key_id (never key_secret) to the frontend
 export const getPaymentConfig = (_req, res) => {
-  res.json({ key: process.env.RAZORPAY_KEY_ID });
+  const key = process.env.RAZORPAY_KEY_ID;
+  if (!key) {
+    return res.status(503).json({ message: 'Payment service is not configured' });
+  }
+  res.json({ key });
 };
 
 // POST /api/payments/create-order — create a Razorpay order
@@ -89,7 +94,19 @@ export const verifyAndCreateOrder = async (req, res) => {
       return res.status(400).json({ message: 'No order items' });
     }
 
-    // Validate stock
+    if (!req.user && (!guestEmail || !guestPhone || !guestName)) {
+      return res.status(400).json({ message: 'Guest details are required for guest checkout' });
+    }
+
+    // Prevent duplicate orders from replayed payment callbacks
+    const existingOrder = await prisma.order.findFirst({
+      where: { razorpayPaymentId: razorpay_payment_id },
+    });
+    if (existingOrder) {
+      return res.status(200).json(serializeOrder(existingOrder));
+    }
+
+    // Validate stock — prefer variant-level check when unitLabel present
     for (const item of items) {
       const qty = item.quantity || item.qty || 1;
       if (item.unitLabel && item.product) {
@@ -101,7 +118,23 @@ export const verifyAndCreateOrder = async (req, res) => {
             message: `Insufficient stock for "${item.name} (${item.unitLabel})". Available: ${variant.stockQuantity}`,
           });
         }
+      } else if (item.product) {
+        const product = await prisma.product.findUnique({ where: { id: item.product } });
+        if (product && product.stockQuantity < qty) {
+          return res.status(400).json({
+            message: `Insufficient stock for "${item.name}". Available: ${product.stockQuantity}`,
+          });
+        }
       }
+    }
+
+    // Server-side price verification
+    const expectedTotal = await verifyPrices(items);
+    const submittedTotal = Math.round((totalPrice || 0) * 100) / 100;
+    if (Math.abs(expectedTotal - submittedTotal) > 1) {
+      return res.status(400).json({
+        message: `Price mismatch — expected Rs. ${expectedTotal.toFixed(2)} but received Rs. ${submittedTotal.toFixed(2)}. Please refresh and try again.`,
+      });
     }
 
     const order = await prisma.$transaction(async (tx) => {
@@ -111,7 +144,7 @@ export const verifyAndCreateOrder = async (req, res) => {
           guestEmail: guestEmail?.toLowerCase().trim() || null,
           guestPhone: guestPhone?.trim() || null,
           guestName: guestName?.trim() || null,
-          totalPrice,
+          totalPrice: expectedTotal,
           shippingAddress: shippingAddress || null,
           razorpayOrderId: razorpay_order_id,
           razorpayPaymentId: razorpay_payment_id,

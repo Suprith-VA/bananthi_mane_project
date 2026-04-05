@@ -3,6 +3,25 @@ import { serializeOrder } from '../utils/serializers.js';
 import { isValidUUID, fulfillmentToStatus } from '../utils/helpers.js';
 import { sendOrderConfirmationEmail, sendOrderStatusChangeEmail, sendLowStockAlertEmail, sendCustomerOrderConfirmationEmail, sendCustomerShippingUpdateEmail } from '../services/emailService.js';
 
+export async function verifyPrices(items) {
+  let serverTotal = 0;
+  for (const item of items) {
+    const qty = item.quantity || item.qty || 1;
+    if (item.product && item.unitLabel) {
+      const variant = await prisma.productVariant.findFirst({
+        where: { productId: item.product, unitLabel: item.unitLabel },
+      });
+      if (variant) { serverTotal += variant.price * qty; continue; }
+    }
+    if (item.product) {
+      const product = await prisma.product.findUnique({ where: { id: item.product }, select: { price: true } });
+      if (product) { serverTotal += product.price * qty; continue; }
+    }
+    serverTotal += (item.price || 0) * qty;
+  }
+  return Math.round(serverTotal * 100) / 100;
+}
+
 async function syncProductStock(tx, productId) {
   const agg = await tx.productVariant.aggregate({
     where: { productId },
@@ -40,7 +59,7 @@ export const createOrder = async (req, res) => {
       return res.status(400).json({ message: 'Guest details are required for guest checkout' });
     }
 
-    // Validate stock availability — check variant stock when variantId present
+    // Validate stock — prefer variant-level check when unitLabel or variantId present
     for (const item of normalizedItems) {
       const qty = item.quantity || item.qty || 1;
       if (item.variantId) {
@@ -48,6 +67,15 @@ export const createOrder = async (req, res) => {
         if (variant && variant.stockQuantity < qty) {
           return res.status(400).json({
             message: `Insufficient stock for "${item.name} (${item.unitLabel || variant.unitLabel})". Available: ${variant.stockQuantity}, requested: ${qty}`,
+          });
+        }
+      } else if (item.product && item.unitLabel) {
+        const variant = await prisma.productVariant.findFirst({
+          where: { productId: item.product, unitLabel: item.unitLabel },
+        });
+        if (variant && variant.stockQuantity < qty) {
+          return res.status(400).json({
+            message: `Insufficient stock for "${item.name} (${item.unitLabel})". Available: ${variant.stockQuantity}, requested: ${qty}`,
           });
         }
       } else if (item.product) {
@@ -61,6 +89,15 @@ export const createOrder = async (req, res) => {
       }
     }
 
+    // Server-side price verification — reject tampered totals
+    const expectedTotal = await verifyPrices(normalizedItems);
+    const submittedTotal = Math.round((totalPrice || 0) * 100) / 100;
+    if (Math.abs(expectedTotal - submittedTotal) > 1) {
+      return res.status(400).json({
+        message: `Price mismatch — expected Rs. ${expectedTotal.toFixed(2)} but received Rs. ${submittedTotal.toFixed(2)}. Please refresh and try again.`,
+      });
+    }
+
     const method = paymentInfo?.paymentMethod || 'COD';
     const pStatus = paymentInfo?.paymentStatus || 'Pending';
     const isPaid = pStatus === 'Paid';
@@ -72,7 +109,7 @@ export const createOrder = async (req, res) => {
           guestEmail: guestEmail?.toLowerCase().trim(),
           guestPhone: guestPhone?.trim(),
           guestName: guestName?.trim(),
-          totalPrice,
+          totalPrice: expectedTotal,
           shippingAddress: shippingAddress || null,
           razorpayOrderId: paymentInfo?.razorpayOrderId,
           paymentMethod: method,
@@ -148,7 +185,8 @@ export const createOrder = async (req, res) => {
 
     res.status(201).json(serializeOrder(order));
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    const code = error.message?.includes('Insufficient stock') ? 400 : 500;
+    res.status(code).json({ message: error.message });
   }
 };
 

@@ -129,7 +129,9 @@ export default function Checkout() {
       if (!loaded) throw new Error('Failed to load Razorpay. Check your internet connection.');
 
       const configRes = await fetch(`${API}/api/payments/config`);
+      if (!configRes.ok) throw new Error('Payment service is temporarily unavailable. Please try again.');
       const { key } = await configRes.json();
+      if (!key) throw new Error('Payment is not configured. Please contact support.');
 
       const headers = { 'Content-Type': 'application/json' };
       if (userInfo?.token) headers.Authorization = `Bearer ${userInfo.token}`;
