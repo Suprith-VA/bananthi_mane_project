@@ -120,7 +120,7 @@ export default function About() {
                 <span>SS</span>
               </div>
               <h3>Shwetha Shivakumar</h3>
-              <p className="founder-role">Co-Founder</p>
+              <p className="founder-role">Founder</p>
             </div>
             <div className="founder-card">
               <div className="founder-avatar">

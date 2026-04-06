@@ -47,6 +47,8 @@ export function CartProvider({ children }) {
 
   const [cart, setCart] = useState(() => loadCart(userId));
   const [isOpen, setIsOpen] = useState(false);
+  const [cartToast, setCartToast] = useState(null); // { name, unitLabel, image }
+  const toastTimerRef = useRef(null);
 
   /* When auth state changes (login / logout / switch user),
      reload that identity's cart from localStorage */
@@ -76,6 +78,10 @@ export function CartProvider({ children }) {
         quantity: (prev[key]?.quantity ?? 0) + 1,
       },
     }));
+    // Show add-to-cart toast
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    setCartToast({ name: item.name, unitLabel: item.unitLabel || null, image: item.image || null });
+    toastTimerRef.current = setTimeout(() => setCartToast(null), 2800);
   }, []);
 
   const removeOne = useCallback((key) => {
@@ -109,6 +115,7 @@ export function CartProvider({ children }) {
       cart, addToCart, removeOne, removeAll, clearCart,
       totalItems, totalPrice,
       isOpen, setIsOpen,
+      cartToast, dismissCartToast: () => setCartToast(null),
     }}>
       {children}
     </CartContext.Provider>

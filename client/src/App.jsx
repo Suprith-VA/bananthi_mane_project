@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { useCart } from './context/CartContext';
 
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -31,6 +32,35 @@ import ShippingPolicy from './pages/ShippingPolicy';
 
 import './styles/globals.css';
 
+function CartToast() {
+  const { cartToast, dismissCartToast, setIsOpen } = useCart();
+  if (!cartToast) return null;
+  return (
+    <div className="cart-toast" role="status" aria-live="polite">
+      <div className="cart-toast-inner">
+        {cartToast.image && (
+          <img src={cartToast.image} alt="" className="cart-toast-img" />
+        )}
+        <div className="cart-toast-text">
+          <span className="cart-toast-check">✓</span>
+          <div>
+            <p className="cart-toast-title">Added to bag</p>
+            <p className="cart-toast-item">
+              {cartToast.name}{cartToast.unitLabel ? ` — ${cartToast.unitLabel}` : ''}
+            </p>
+          </div>
+        </div>
+        <button
+          className="cart-toast-view"
+          onClick={() => { dismissCartToast(); setIsOpen(true); }}
+        >
+          View Bag
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -43,6 +73,7 @@ function AppShell() {
   return (
     <>
       <ScrollToTop />
+      <CartToast />
       <Header />
 
       <Routes>

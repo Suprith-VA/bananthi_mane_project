@@ -443,6 +443,66 @@
    ═══════════════════════════════════════════════════════════ */
 .faq-content { gap: 3rem; }
 
+/* ── Quick FAQ grid ──────────────────────────────────────── */
+.faq-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.faq-quick-card {
+  background: var(--light-cream);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.4rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.faq-quick-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-bottom: 0.2rem;
+}
+
+.faq-quick-q {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  font-family: 'Inter', sans-serif;
+  line-height: 1.35;
+}
+
+.faq-quick-a {
+  font-size: 0.88rem !important;
+  color: #666 !important;
+  line-height: 1.65 !important;
+}
+
+.faq-detailed-label {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #999;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 600;
+}
+
+.faq-detailed-label::before,
+.faq-detailed-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+}
+
+@media (max-width: 600px) {
+  .faq-quick-grid { grid-template-columns: 1fr; }
+}
+
 .faq-section-title {
   font-size: 1.1rem !important;
   color: var(--sage-green) !important;
