@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { useCart } from './context/CartContext';
@@ -33,7 +33,8 @@ import ShippingPolicy from './pages/ShippingPolicy';
 import './styles/globals.css';
 
 function CartToast() {
-  const { cartToast, dismissCartToast, setIsOpen } = useCart();
+  const { cartToast, dismissCartToast } = useCart();
+  const nav = useNavigate();
   if (!cartToast) return null;
   return (
     <div className="cart-toast" role="status" aria-live="polite">
@@ -43,7 +44,7 @@ function CartToast() {
         )}
         <div className="cart-toast-text">
           <span className="cart-toast-check">✓</span>
-          <div>
+          <div className="cart-toast-details">
             <p className="cart-toast-title">Added to bag</p>
             <p className="cart-toast-item">
               {cartToast.name}{cartToast.unitLabel ? ` — ${cartToast.unitLabel}` : ''}
@@ -52,7 +53,7 @@ function CartToast() {
         </div>
         <button
           className="cart-toast-view"
-          onClick={() => { dismissCartToast(); setIsOpen(true); }}
+          onClick={() => { dismissCartToast(); nav('/cart'); }}
         >
           View Bag
         </button>

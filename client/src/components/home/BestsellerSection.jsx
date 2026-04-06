@@ -26,8 +26,10 @@ export default function BestsellerSection() {
           const name = p.name || p.title;
           const href = p.slug || id;
           const hasVariants = p.variants?.length > 0;
-          const defaultVariant = hasVariants ? p.variants[0] : null;
-          const displayPrice = defaultVariant?.price ?? p.price;
+          const lowestVariant = hasVariants
+            ? p.variants.reduce((min, v) => (v.price < min.price ? v : min), p.variants[0])
+            : null;
+          const displayPrice = lowestVariant?.price ?? p.price;
           const outOfStock = hasVariants
             ? p.variants.every(v => (v.stockQuantity ?? 0) === 0)
             : (p.stockQuantity ?? p.stock ?? 1) === 0;
@@ -47,9 +49,9 @@ export default function BestsellerSection() {
                 className="btn"
                 onClick={() => addToCart({
                   productId: id,
-                  variantId: defaultVariant?._id || defaultVariant?.id || null,
+                  variantId: lowestVariant?._id || lowestVariant?.id || null,
                   name,
-                  unitLabel: defaultVariant?.unitLabel || null,
+                  unitLabel: lowestVariant?.unitLabel || null,
                   price: displayPrice,
                   image: p.image || '/images/main.png',
                 })}

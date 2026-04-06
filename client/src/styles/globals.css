@@ -108,17 +108,17 @@ ul { list-style: none; margin: 0; padding: 0; }
   box-shadow: 0 8px 32px rgba(0,0,0,0.12);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  min-width: 280px;
-  max-width: 340px;
+  gap: 14px;
+  padding: 14px 16px;
+  min-width: 320px;
+  max-width: 420px;
 }
 
 .cart-toast-img {
-  width: 44px;
-  height: 44px;
+  width: 52px;
+  height: 52px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 8px;
   flex-shrink: 0;
   background: var(--light-cream);
 }
@@ -133,29 +133,36 @@ ul { list-style: none; margin: 0; padding: 0; }
 
 .cart-toast-check {
   color: var(--sage-green);
-  font-size: 1rem;
+  font-size: 1.1rem;
   font-weight: 700;
   flex-shrink: 0;
   margin-top: 1px;
 }
 
+.cart-toast-details {
+  min-width: 0;
+  flex: 1;
+}
+
 .cart-toast-title {
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--sage-green);
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  margin: 0 0 2px;
+  margin: 0 0 3px;
 }
 
 .cart-toast-item {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   color: var(--text-dark);
   font-weight: 500;
   margin: 0;
-  white-space: nowrap;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .cart-toast-view {
@@ -163,8 +170,8 @@ ul { list-style: none; margin: 0; padding: 0; }
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 7px 13px;
-  font-size: 0.78rem;
+  padding: 9px 16px;
+  font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;

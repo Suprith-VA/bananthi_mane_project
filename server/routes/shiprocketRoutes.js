@@ -1,6 +1,6 @@
 import express from "express";
 import prisma from "../config/prisma.js";
-import { protect, isSuperAdmin } from "../middleware/auth.js";
+import { protect, isAdmin } from "../middleware/auth.js";
 import { serializeOrder } from "../utils/serializers.js";
 import {
   sendOrderStatusChangeEmail,
@@ -117,7 +117,7 @@ function extractTrackingStatus(tracking) {
 }
 
 // POST /api/shiprocket/push-order/:orderId — push a local order to Shiprocket
-router.post("/push-order/:orderId", protect, isSuperAdmin, async (req, res) => {
+router.post("/push-order/:orderId", protect, isAdmin, async (req, res) => {
   try {
     const order = await prisma.order.findUnique({
       where: { id: req.params.orderId },
@@ -186,7 +186,7 @@ router.post("/push-order/:orderId", protect, isSuperAdmin, async (req, res) => {
 });
 
 // POST /api/shiprocket/assign-awb/:orderId — assign courier, get AWB, request pickup, auto-update status
-router.post("/assign-awb/:orderId", protect, isSuperAdmin, async (req, res) => {
+router.post("/assign-awb/:orderId", protect, isAdmin, async (req, res) => {
   try {
     const order = await prisma.order.findUnique({
       where: { id: req.params.orderId },
@@ -288,7 +288,7 @@ router.post("/assign-awb/:orderId", protect, isSuperAdmin, async (req, res) => {
 });
 
 // POST /api/shiprocket/cancel/:orderId — cancel on Shiprocket (shipment + order)
-router.post("/cancel/:orderId", protect, isSuperAdmin, async (req, res) => {
+router.post("/cancel/:orderId", protect, isAdmin, async (req, res) => {
   try {
     const order = await prisma.order.findUnique({
       where: { id: req.params.orderId },
@@ -369,7 +369,7 @@ router.post("/cancel/:orderId", protect, isSuperAdmin, async (req, res) => {
 });
 
 // GET /api/shiprocket/track/:orderId — track via AWB
-router.get("/track/:orderId", protect, isSuperAdmin, async (req, res) => {
+router.get("/track/:orderId", protect, isAdmin, async (req, res) => {
   try {
     const order = await prisma.order.findUnique({
       where: { id: req.params.orderId },
@@ -492,7 +492,7 @@ router.post("/webhook", async (req, res) => {
    POST /api/shiprocket/sync-statuses — Admin-triggered bulk sync
    Polls Shiprocket for all orders with AWB that aren't terminal.
    ══════════════════════════════════════════════════════════════ */
-router.post("/sync-statuses", protect, isSuperAdmin, async (req, res) => {
+router.post("/sync-statuses", protect, isAdmin, async (req, res) => {
   try {
     // Find all orders that have an AWB and are not yet Delivered/Cancelled
     const activeOrders = await prisma.order.findMany({

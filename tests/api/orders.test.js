@@ -488,13 +488,13 @@ describe("Orders — Payment Update (PUT /api/orders/:id/payment)", () => {
     createdOrderIds.push(paymentOrderId);
   });
 
-  it("returns 403 for admin (non-super) — payment update is super-admin only", async () => {
+  it("admin (non-super) can update payment status", async () => {
     const { status } = await put(
       `/api/orders/${paymentOrderId}/payment`,
       { paymentStatus: "Paid", isPaid: true },
       adToken,
     );
-    expect(status).toBe(403);
+    expect(status).toBe(200);
   });
 
   it("super-admin can mark order as Paid", async () => {
@@ -756,24 +756,24 @@ describe("Orders — Cancel (DELETE /api/orders/:id) + stock restore", () => {
     expect(body.message).toMatch(/already cancelled/i);
   });
 
-  it("returns 403 for admin (non-super) attempting DELETE cancel", async () => {
-    // Create a fresh order
+  it("admin (non-super) can cancel an order via DELETE", async () => {
     const payload = buildCodOrder(
       testProductId,
       testVariantLabel,
       testVariantPrice,
       {
-        guestEmail: uniqueEmail("cancel403"),
-        guestName: "Cancel Guard Tester",
+        guestEmail: uniqueEmail("cancel-admin"),
+        guestName: "Cancel Admin Tester",
         guestPhone: "9600000002",
       },
     );
     const { body: created } = await post("/api/orders", payload);
     const tempId = created._id;
-    createdOrderIds.push(tempId); // cleaned up in global afterAll
+    createdOrderIds.push(tempId);
 
-    const { status } = await del(`/api/orders/${tempId}`, adToken);
-    expect(status).toBe(403);
+    const { status, body } = await del(`/api/orders/${tempId}`, adToken);
+    expect(status).toBe(200);
+    expect(body.message).toMatch(/cancelled/i);
   });
 
   it("returns 401 for unauthenticated DELETE attempt", async () => {

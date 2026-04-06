@@ -20,8 +20,8 @@ router.get('/mine', protect, getMyOrders);
 router.get('/track/:orderId', trackOrder);
 router.route('/:id').get(protect, getOrderById);
 router.put('/:id/status', protect, isAdmin, updateOrderStatus);
-router.put('/:id/payment', protect, isSuperAdmin, updateOrderPayment);
-router.put('/:id/shiprocket', protect, isSuperAdmin, appendShiprocketData);
-router.delete('/:id', protect, isSuperAdmin, cancelOrder);
+router.put('/:id/payment', protect, isAdmin, updateOrderPayment);
+router.put('/:id/shiprocket', protect, isAdmin, appendShiprocketData);
+router.delete('/:id', protect, isAdmin, cancelOrder);
 
 export default router;

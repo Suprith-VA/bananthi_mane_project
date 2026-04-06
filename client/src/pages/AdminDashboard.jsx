@@ -842,6 +842,7 @@ export default function AdminDashboard() {
   const token = userInfo?.token;
   const role = userInfo?.role || "user";
   const isSuperAdmin = role === "super-admin";
+  const isAdminOrSuper = role === "admin" || role === "super-admin";
 
   const [activeTab, setActiveTab] = useState(() => {
     try {
@@ -1320,7 +1321,7 @@ export default function AdminDashboard() {
       : ADMIN_FULFILLMENT_OPTIONS;
     return (
       <div className="admin-table-container">
-        {isSuperAdmin && (
+        {isAdminOrSuper && (
           <div className="table-header-actions">
             <button
               className="action-btn"
@@ -1396,7 +1397,7 @@ export default function AdminDashboard() {
                         </option>
                       ))}
                     </select>
-                    {isSuperAdmin && (
+                    {isAdminOrSuper && (
                       <>
                         {!o.shiprocketOrderId &&
                           (o.fulfillmentStatus === "Packed") && (
@@ -1838,7 +1839,7 @@ export default function AdminDashboard() {
         />
       )}
 
-      {shiprocketOrder && isSuperAdmin && (
+      {shiprocketOrder && isAdminOrSuper && (
         <ShiprocketModal
           order={shiprocketOrder}
           onClose={() => setShiprocketOrder(null)}
@@ -1846,7 +1847,7 @@ export default function AdminDashboard() {
         />
       )}
 
-      {paymentOrder && isSuperAdmin && (
+      {paymentOrder && isAdminOrSuper && (
         <PaymentModal
           order={paymentOrder}
           onClose={() => setPaymentOrder(null)}
