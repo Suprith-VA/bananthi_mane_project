@@ -55,7 +55,10 @@ export default function Checkout() {
     }
   }, [successOrder]);
 
+  const GST_RATE = 0.05;
   const cartItems = Object.values(cart);
+  const gstAmount = Math.round(totalPrice * GST_RATE * 100) / 100;
+  const grandTotal = Math.round((totalPrice + gstAmount) * 100) / 100;
 
   const buildOrderItems = () =>
     cartItems.map((item) => ({
@@ -100,7 +103,7 @@ export default function Checkout() {
         headers,
         body: JSON.stringify({
           items: buildOrderItems(),
-          totalPrice,
+          totalPrice: grandTotal,
           shippingAddress: buildShippingAddress(),
           guestEmail: !userInfo ? form.email : undefined,
           guestPhone: !userInfo ? form.phone : undefined,
@@ -139,7 +142,7 @@ export default function Checkout() {
       const orderRes = await fetch(`${API}/api/payments/create-order`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({ amount: totalPrice }),
+        body: JSON.stringify({ amount: grandTotal }),
       });
       const rzpOrder = await orderRes.json();
       if (!orderRes.ok) throw new Error(rzpOrder.message || 'Failed to create payment order');
@@ -170,7 +173,7 @@ export default function Checkout() {
                 razorpay_signature: response.razorpay_signature,
                 orderData: {
                   items: buildOrderItems(),
-                  totalPrice,
+                  totalPrice: grandTotal,
                   shippingAddress: buildShippingAddress(),
                   guestEmail: !userInfo ? form.email : undefined,
                   guestPhone: !userInfo ? form.phone : undefined,
@@ -398,9 +401,17 @@ export default function Checkout() {
               </div>
             ))}
           </div>
+          <div className="checkout-summary-line">
+            <span>Subtotal</span>
+            <span>Rs. {totalPrice.toFixed(2)}</span>
+          </div>
+          <div className="checkout-summary-line checkout-summary-gst">
+            <span>GST (5%)</span>
+            <span>Rs. {gstAmount.toFixed(2)}</span>
+          </div>
           <div className="checkout-summary-total">
             <span>Total</span>
-            <span>Rs. {totalPrice.toFixed(2)}</span>
+            <span>Rs. {grandTotal.toFixed(2)}</span>
           </div>
           <button
             className="checkout-btn"
@@ -410,8 +421,8 @@ export default function Checkout() {
             {loading
               ? 'Processing...'
               : paymentMethod === 'COD'
-                ? `Place Order (COD) — Rs. ${totalPrice.toFixed(2)}`
-                : `Pay Rs. ${totalPrice.toFixed(2)}`
+                ? `Place Order (COD) — Rs. ${grandTotal.toFixed(2)}`
+                : `Pay Rs. ${grandTotal.toFixed(2)}`
             }
           </button>
         </div>

@@ -168,6 +168,20 @@
   font-size: 0.85rem;
 }
 
+.checkout-summary-line {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.94rem;
+  color: #555;
+  margin-bottom: 0.4rem;
+}
+
+.checkout-summary-gst {
+  padding-bottom: 0.7rem;
+  border-bottom: 1px dashed var(--border-color);
+  margin-bottom: 0.7rem;
+}
+
 .checkout-summary-total {
   display: flex;
   justify-content: space-between;

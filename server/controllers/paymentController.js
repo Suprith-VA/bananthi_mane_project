@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import prisma from '../config/prisma.js';
 import { serializeOrder } from '../utils/serializers.js';
 import { sendOrderConfirmationEmail, sendCustomerOrderConfirmationEmail, sendLowStockAlertEmail } from '../services/emailService.js';
-import { verifyPrices } from './orderController.js';
+import { verifyPrices, computeGst } from './orderController.js';
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -128,8 +128,9 @@ export const verifyAndCreateOrder = async (req, res) => {
       }
     }
 
-    // Server-side price verification
-    const expectedTotal = await verifyPrices(items);
+    // Server-side price verification with GST
+    const expectedSubtotal = await verifyPrices(items);
+    const { subtotal, gstAmount, totalPrice: expectedTotal } = computeGst(expectedSubtotal);
     const submittedTotal = Math.round((totalPrice || 0) * 100) / 100;
     if (Math.abs(expectedTotal - submittedTotal) > 1) {
       return res.status(400).json({
@@ -144,6 +145,8 @@ export const verifyAndCreateOrder = async (req, res) => {
           guestEmail: guestEmail?.toLowerCase().trim() || null,
           guestPhone: guestPhone?.trim() || null,
           guestName: guestName?.trim() || null,
+          subtotalPrice: subtotal,
+          gstAmount,
           totalPrice: expectedTotal,
           shippingAddress: shippingAddress || null,
           razorpayOrderId: razorpay_order_id,

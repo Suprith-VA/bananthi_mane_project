@@ -34,6 +34,7 @@ import {
   loginAs,
   uniqueEmail,
   buildCodOrder,
+  withGst,
   CREDENTIALS,
   BASE_URL,
 } from "./setup.js";
@@ -183,9 +184,8 @@ describe("Orders — Guest COD Creation (POST /api/orders)", () => {
           quantity: 1,
         },
       ],
-      totalPrice: testVariantPrice,
+      totalPrice: withGst(testVariantPrice),
       shippingAddress: "123 Test St, Bengaluru",
-      // deliberately omitting guestEmail, guestPhone, guestName
     };
 
     const { status, body } = await post("/api/orders", payload);
@@ -223,9 +223,8 @@ describe("Orders — Logged-in User COD Creation", () => {
           image: "/images/test.png",
         },
       ],
-      totalPrice: testVariantPrice,
+      totalPrice: withGst(testVariantPrice),
       shippingAddress: "99 User Lane, Bengaluru, Karnataka, 560001",
-      // No guestEmail / guestPhone / guestName — server should use the logged-in user
     };
 
     const { status, body } = await post("/api/orders", payload, usToken);
@@ -243,7 +242,6 @@ describe("Orders — Logged-in User COD Creation", () => {
   });
 
   it("order appears in GET /api/orders/mine for the logged-in user", async () => {
-    // Create a fresh order for this user
     const payload = {
       items: [
         {
@@ -254,7 +252,7 @@ describe("Orders — Logged-in User COD Creation", () => {
           quantity: 1,
         },
       ],
-      totalPrice: testVariantPrice,
+      totalPrice: withGst(testVariantPrice),
       shippingAddress: "Mine Lane, Bengaluru",
     };
 
@@ -685,7 +683,7 @@ describe("Orders — Out-of-Stock Guard (T3.5)", () => {
           image: "/images/test.png",
         },
       ],
-      totalPrice: testVariantPrice,
+      totalPrice: withGst(testVariantPrice),
       shippingAddress: "42 OOS Street, Bengaluru, Karnataka, 560001",
       guestName: "OOS Tester",
       guestEmail: uniqueEmail("oos"),
@@ -804,7 +802,8 @@ describe("Orders — Multi-item order (T11.1)", () => {
     const p2 = eligible[1];
     const v2 = p2.variants.find((v) => v.stockQuantity > 0);
 
-    const total = v1.price + v2.price;
+    const subtotal = v1.price + v2.price;
+    const total = withGst(subtotal);
 
     const { status, body } = await post("/api/orders", {
       items: [

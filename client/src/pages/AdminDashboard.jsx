@@ -589,6 +589,18 @@ function OrderDetailModal({ order, onClose }) {
               {order.paymentInfo?.paymentMethod})
             </span>
           </div>
+          {order.subtotalPrice != null && (
+            <div className="od-row">
+              <strong>Subtotal</strong>
+              <span>₹{order.subtotalPrice?.toFixed(2)}</span>
+            </div>
+          )}
+          {order.gstAmount != null && (
+            <div className="od-row">
+              <strong>GST (5%)</strong>
+              <span>₹{order.gstAmount?.toFixed(2)}</span>
+            </div>
+          )}
           <div className="od-row">
             <strong>Total</strong>
             <span>₹{order.totalPrice?.toFixed(2)}</span>

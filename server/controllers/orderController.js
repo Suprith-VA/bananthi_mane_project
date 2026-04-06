@@ -3,6 +3,8 @@ import { serializeOrder } from '../utils/serializers.js';
 import { isValidUUID, fulfillmentToStatus } from '../utils/helpers.js';
 import { sendOrderConfirmationEmail, sendOrderStatusChangeEmail, sendLowStockAlertEmail, sendCustomerOrderConfirmationEmail, sendCustomerShippingUpdateEmail } from '../services/emailService.js';
 
+const GST_RATE = 0.05;
+
 export async function verifyPrices(items) {
   let serverTotal = 0;
   for (const item of items) {
@@ -20,6 +22,12 @@ export async function verifyPrices(items) {
     serverTotal += (item.price || 0) * qty;
   }
   return Math.round(serverTotal * 100) / 100;
+}
+
+export function computeGst(subtotal) {
+  const gst = Math.round(subtotal * GST_RATE * 100) / 100;
+  const total = Math.round((subtotal + gst) * 100) / 100;
+  return { subtotal, gstAmount: gst, totalPrice: total };
 }
 
 async function syncProductStock(tx, productId) {
@@ -89,8 +97,9 @@ export const createOrder = async (req, res) => {
       }
     }
 
-    // Server-side price verification — reject tampered totals
-    const expectedTotal = await verifyPrices(normalizedItems);
+    // Server-side price verification with GST
+    const expectedSubtotal = await verifyPrices(normalizedItems);
+    const { subtotal, gstAmount, totalPrice: expectedTotal } = computeGst(expectedSubtotal);
     const submittedTotal = Math.round((totalPrice || 0) * 100) / 100;
     if (Math.abs(expectedTotal - submittedTotal) > 1) {
       return res.status(400).json({
@@ -109,6 +118,8 @@ export const createOrder = async (req, res) => {
           guestEmail: guestEmail?.toLowerCase().trim(),
           guestPhone: guestPhone?.trim(),
           guestName: guestName?.trim(),
+          subtotalPrice: subtotal,
+          gstAmount,
           totalPrice: expectedTotal,
           shippingAddress: shippingAddress || null,
           razorpayOrderId: paymentInfo?.razorpayOrderId,

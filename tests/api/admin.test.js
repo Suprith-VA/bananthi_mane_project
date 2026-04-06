@@ -32,6 +32,7 @@ import {
   adminToken,
   userToken,
   uniqueEmail,
+  CREDENTIALS,
 } from "./setup.js";
 
 // ── Module-level state ────────────────────────────────────────────────────────
@@ -161,22 +162,22 @@ describe("Admin — User Management (GET/PUT /api/admin/users)", () => {
     expect(user).not.toHaveProperty("password");
   });
 
-  it("returned user list includes all three seeded test personas", async () => {
+  it("returned user list includes the configured test personas", async () => {
     const { body } = await get("/api/admin/users", saToken);
     const emails = body.map((u) => u.email);
 
-    expect(emails).toContain("customer.test@bananthi.local");
-    expect(emails).toContain("admin.test@bananthi.local");
-    expect(emails).toContain("ops.test@bananthi.local");
+    expect(emails).toContain(CREDENTIALS.user.email);
+    expect(emails).toContain(CREDENTIALS.admin.email);
+    expect(emails).toContain(CREDENTIALS.superAdmin.email);
   });
 
-  it("seeded roles are correct for each test persona", async () => {
+  it("roles are correct for each test persona", async () => {
     const { body } = await get("/api/admin/users", saToken);
     const byEmail = Object.fromEntries(body.map((u) => [u.email, u]));
 
-    expect(byEmail["customer.test@bananthi.local"].role).toBe("user");
-    expect(byEmail["admin.test@bananthi.local"].role).toBe("admin");
-    expect(byEmail["ops.test@bananthi.local"].role).toBe("super-admin");
+    expect(byEmail[CREDENTIALS.user.email].role).toBe("user");
+    expect(byEmail[CREDENTIALS.admin.email].role).toBe("admin");
+    expect(byEmail[CREDENTIALS.superAdmin.email].role).toBe("super-admin");
   });
 
   it("GET /api/admin/users/:id returns 401 for unauthenticated request", async () => {

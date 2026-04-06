@@ -52,6 +52,8 @@ export function serializeOrder(order) {
     guestName: order.guestName,
     items: (order.items || []).map(serializeOrderItem),
     orderItems: (order.items || []).map(serializeOrderItem),
+    subtotalPrice: order.subtotalPrice,
+    gstAmount: order.gstAmount,
     totalPrice: order.totalPrice,
     status: order.status,
     fulfillmentStatus: order.fulfillmentStatus,

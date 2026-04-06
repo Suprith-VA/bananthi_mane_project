@@ -1,29 +1,39 @@
 // tests/api/setup.js
 // ─────────────────────────────────────────────────────────────────────────────
 // Shared helpers used by every test file.
+// Credentials are loaded from environment variables (server/.env).
 // ─────────────────────────────────────────────────────────────────────────────
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, '../../server/.env') });
 
 export const BASE_URL = process.env.TEST_API_URL || "http://localhost:5001";
 
-// ── Test personas ─────────────────────────────────────────────────────────────
-// Roles match the seeded accounts in server/scripts/seedTestUsers.js
+// ── Test personas (from env — keep credentials out of source control) ────────
 export const CREDENTIALS = {
-  // Regular customer — role: user
   user: {
-    email: "customer.test@bananthi.local",
-    password: "Test@123",
+    email: process.env.TEST_USER_EMAIL,
+    password: process.env.TEST_USER_PASSWORD,
   },
-  // Admin (non-super) — role: admin  — used for admin-vs-super-admin guard tests
   admin: {
-    email: "admin.test@bananthi.local",
-    password: "Admin@1234",
+    email: process.env.TEST_ADMIN_EMAIL,
+    password: process.env.TEST_ADMIN_PASSWORD,
   },
-  // Super-admin — role: super-admin — used for all privileged operations
   superAdmin: {
-    email: "ops.test@bananthi.local",
-    password: "Ops@12345",
+    email: process.env.TEST_SUPER_ADMIN_EMAIL,
+    password: process.env.TEST_SUPER_ADMIN_PASSWORD,
   },
 };
+
+if (!CREDENTIALS.superAdmin.email || !CREDENTIALS.superAdmin.password) {
+  throw new Error(
+    'Test credentials not configured. Set TEST_SUPER_ADMIN_EMAIL, TEST_SUPER_ADMIN_PASSWORD, ' +
+    'TEST_ADMIN_EMAIL, TEST_ADMIN_PASSWORD, TEST_USER_EMAIL, TEST_USER_PASSWORD in server/.env'
+  );
+}
 
 // ── Token cache (avoids re-logging-in for every test) ─────────────────────────
 const _tokenCache = {};
@@ -116,10 +126,18 @@ export function uniqueEmail(prefix = "test") {
   return `${prefix}.${Date.now()}@autotest.bananthi.local`;
 }
 
+// ── GST helper (must match server's 5% rate) ─────────────────────────────────
+const GST_RATE = 0.05;
+export function withGst(subtotal) {
+  const gst = Math.round(subtotal * GST_RATE * 100) / 100;
+  return Math.round((subtotal + gst) * 100) / 100;
+}
+
 // ── Sample order payload builder ──────────────────────────────────────────────
 
 /**
  * Build a minimal valid COD order payload.
+ * totalPrice is automatically computed as subtotal + 5% GST.
  *
  * @param {string} productId   – UUID of the product
  * @param {string} unitLabel   – variant label, e.g. "250ml"
@@ -139,7 +157,7 @@ export function buildCodOrder(productId, unitLabel, price, overrides = {}) {
         image: "/images/test.png",
       },
     ],
-    totalPrice: price,
+    totalPrice: withGst(price),
     shippingAddress: "42 Test Street, Bengaluru, Karnataka, 560001",
     guestName: "Auto Tester",
     guestEmail: uniqueEmail("order"),

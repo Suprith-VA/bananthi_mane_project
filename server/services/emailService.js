@@ -128,10 +128,20 @@ export async function sendOrderConfirmationEmail(order) {
         <th style="padding:10px 12px;text-align:right;">Amount</th>
       </tr></thead>
       <tbody>${itemsHtml}</tbody>
-      <tfoot><tr style="background:${BRAND.cream};font-weight:700;">
-        <td colspan="2" style="padding:12px;">Total</td>
-        <td style="padding:12px;text-align:right;font-size:16px;">₹${Number(order.totalPrice).toFixed(2)}</td>
-      </tr></tfoot>
+      <tfoot>
+        ${order.subtotalPrice != null ? `<tr style="background:${BRAND.cream};">
+          <td colspan="2" style="padding:8px 12px;font-size:13px;color:#777;">Subtotal</td>
+          <td style="padding:8px 12px;text-align:right;font-size:13px;color:#777;">₹${Number(order.subtotalPrice).toFixed(2)}</td>
+        </tr>
+        <tr style="background:${BRAND.cream};">
+          <td colspan="2" style="padding:8px 12px;font-size:13px;color:#777;">GST (5%)</td>
+          <td style="padding:8px 12px;text-align:right;font-size:13px;color:#777;">₹${Number(order.gstAmount).toFixed(2)}</td>
+        </tr>` : ''}
+        <tr style="background:${BRAND.cream};font-weight:700;">
+          <td colspan="2" style="padding:12px;">Total</td>
+          <td style="padding:12px;text-align:right;font-size:16px;">₹${Number(order.totalPrice).toFixed(2)}</td>
+        </tr>
+      </tfoot>
     </table>
   `;
 
@@ -354,10 +364,20 @@ export async function sendCustomerOrderConfirmationEmail(order) {
         <th style="padding:10px 12px;text-align:right;">Amount</th>
       </tr></thead>
       <tbody>${itemsHtml}</tbody>
-      <tfoot><tr style="background:${BRAND.cream};font-weight:700;">
-        <td colspan="2" style="padding:12px;">Total</td>
-        <td style="padding:12px;text-align:right;font-size:16px;">₹${Number(order.totalPrice).toFixed(2)}</td>
-      </tr></tfoot>
+      <tfoot>
+        ${order.subtotalPrice != null ? `<tr style="background:${BRAND.cream};">
+          <td colspan="2" style="padding:8px 12px;font-size:13px;color:#777;">Subtotal</td>
+          <td style="padding:8px 12px;text-align:right;font-size:13px;color:#777;">₹${Number(order.subtotalPrice).toFixed(2)}</td>
+        </tr>
+        <tr style="background:${BRAND.cream};">
+          <td colspan="2" style="padding:8px 12px;font-size:13px;color:#777;">GST (5%)</td>
+          <td style="padding:8px 12px;text-align:right;font-size:13px;color:#777;">₹${Number(order.gstAmount).toFixed(2)}</td>
+        </tr>` : ''}
+        <tr style="background:${BRAND.cream};font-weight:700;">
+          <td colspan="2" style="padding:12px;">Total</td>
+          <td style="padding:12px;text-align:right;font-size:16px;">₹${Number(order.totalPrice).toFixed(2)}</td>
+        </tr>
+      </tfoot>
     </table>
 
     ${addr.address ? `
