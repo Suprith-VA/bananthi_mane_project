@@ -153,7 +153,7 @@ export const forgotPassword = async (req, res) => {
       data: { resetPasswordToken: hashed, resetPasswordExpire: expires },
     });
 
-    const baseUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const baseUrl = process.env.CLIENT_URL || 'https://www.bananthimane.com';
     const resetUrl = `${baseUrl}/reset-password/${raw}`;
 
     // Send password reset email to the customer

@@ -25,7 +25,7 @@ const quickFaqs = [
   {
     icon: '💳',
     q: 'What payment options do you have?',
-    a: 'UPI, cards, net banking, wallets, and COD (via Razorpay/PayU).',
+    a: 'UPI, cards, net banking, wallets, and COD — all via Razorpay.',
   },
   {
     icon: '📧',
@@ -145,7 +145,7 @@ const faqData = [
     items: [
       {
         q: 'What payment methods do you accept?',
-        a: 'UPI, credit/debit cards, net banking, wallets, and Cash on Delivery (COD) — all processed securely via Razorpay/PayU.',
+        a: 'UPI, credit/debit cards, net banking, wallets, and Cash on Delivery (COD) — all processed securely via Razorpay.',
       },
       {
         q: 'My COD order was not accepted at delivery. Can I reorder?',

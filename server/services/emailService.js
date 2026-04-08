@@ -444,7 +444,7 @@ export async function sendCustomerShippingUpdateEmail(order, newStatus) {
     </div>
 
     <p style="color:#999;font-size:13px;margin-top:20px;text-align:center;">
-      Track your order anytime at <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/track-order" style="color:${BRAND.green};">bananthimane.com/track-order</a>
+      Track your order anytime at <a href="${process.env.CLIENT_URL || 'https://www.bananthimane.com'}/track-order" style="color:${BRAND.green};">bananthimane.com/track-order</a>
     </p>
   `;
 

@@ -23,7 +23,24 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173' }));
+const ALLOWED_ORIGINS = process.env.CLIENT_URL
+  ? [
+      process.env.CLIENT_URL,
+      // Accept both www and non-www variants in production
+      process.env.CLIENT_URL.replace('https://www.', 'https://'),
+      process.env.CLIENT_URL.replace('https://', 'https://www.'),
+    ]
+  : ['http://localhost:5173', 'http://localhost:5173'];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (curl, Postman, server-to-server)
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    return callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 
 // Serve uploaded images statically

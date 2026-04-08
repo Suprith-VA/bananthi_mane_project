@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Block admin and private routes
+Disallow: /admin
+Disallow: /profile
+Disallow: /orders
+Disallow: /checkout
+Disallow: /cart
+Disallow: /reset-password/
+
+# Block API
+Disallow: /api/
+
+Sitemap: https://www.bananthimane.com/sitemap.xml
