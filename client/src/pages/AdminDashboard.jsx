@@ -13,16 +13,29 @@ const PRODUCT_CATEGORIES = [
 const API = "";
 
 function useAdminFetch(token) {
+  const parseJsonSafe = async (res, url) => {
+    const ct = res.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) {
+      // Render / proxy returned HTML (e.g. 503 cold-start page)
+      throw new Error(
+        res.status === 503
+          ? 'Backend server is starting up — please wait a moment and try again.'
+          : `Unexpected response from server (${res.status}). The backend may be restarting.`
+      );
+    }
+    return res.json();
+  };
+
   const get = useCallback(
     async (url) => {
       const res = await fetch(`${API}${url}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
+        const err = await parseJsonSafe(res, url).catch(() => ({}));
         throw new Error(err.message || `Failed to fetch ${url}`);
       }
-      return res.json();
+      return parseJsonSafe(res, url);
     },
     [token],
   );
@@ -38,10 +51,10 @@ function useAdminFetch(token) {
         body: body ? JSON.stringify(body) : undefined,
       });
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
+        const err = await parseJsonSafe(res, url).catch(() => ({}));
         throw new Error(err.message || "Request failed");
       }
-      return res.json();
+      return parseJsonSafe(res, url);
     },
     [token],
   );
@@ -721,7 +734,7 @@ function TrackingModal({ trackingData, onClose }) {
 
   const statusColor = (s) => {
     if (!s) return "#888";
-    const u = s.toUpperCase();
+    const u = String(s).toUpperCase();
     if (u.includes("DELIVER")) return "#27ae60";
     if (u.includes("TRANSIT") || u.includes("SHIPPED")) return "#2980b9";
     if (u.includes("PICKUP")) return "#8e44ad";

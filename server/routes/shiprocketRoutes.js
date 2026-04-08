@@ -96,6 +96,11 @@ function extractTrackingStatus(tracking) {
     status = td.courier_track.current_status;
   }
 
+  // Shiprocket sometimes returns numeric status codes — always coerce to string
+  if (status != null && typeof status !== 'string') {
+    status = String(status);
+  }
+
   // Extract activities from multiple possible locations
   let activities =
     td.shipment_track_activities ||

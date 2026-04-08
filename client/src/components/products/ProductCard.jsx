@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import SizeSelectModal from './SizeSelectModal';
 import './ProductCard.css';
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const [showSizeModal, setShowSizeModal] = useState(false);
 
   const id = product._id || product.id;
   const name = product.name || product.title;
@@ -21,34 +24,49 @@ export default function ProductCard({ product }) {
     : (product.stockQuantity ?? product.stock ?? 1) === 0;
 
   const handleAdd = () => {
-    addToCart({
-      productId: id,
-      variantId: lowestVariant?._id || lowestVariant?.id || null,
-      name,
-      unitLabel: lowestVariant?.unitLabel || null,
-      price: displayPrice,
-      image,
-    });
+    if (hasVariants && product.variants.length > 1) {
+      // Multiple variants → open size picker
+      setShowSizeModal(true);
+    } else {
+      // Single variant or no variants → add directly
+      addToCart({
+        productId: id,
+        variantId: lowestVariant?._id || lowestVariant?.id || null,
+        name,
+        unitLabel: lowestVariant?.unitLabel || null,
+        price: displayPrice,
+        image,
+      });
+    }
   };
 
   return (
-    <div className={`product-card ${outOfStock ? 'out-of-stock' : ''}`}>
-      <div className="product-card-img-wrap" onClick={() => navigate(`/products/${href}`)}>
-        <img src={image} alt={name} />
-        {outOfStock && <span className="oos-overlay">Out of Stock</span>}
+    <>
+      <div className={`product-card ${outOfStock ? 'out-of-stock' : ''}`}>
+        <div className="product-card-img-wrap" onClick={() => navigate(`/products/${href}`)}>
+          <img src={image} alt={name} />
+          {outOfStock && <span className="oos-overlay">Out of Stock</span>}
+        </div>
+        <h3 onClick={() => navigate(`/products/${href}`)}>{name}</h3>
+        <p>
+          {hasVariants && product.variants.length > 1 && <span className="from-label">From </span>}
+          ₹{displayPrice?.toFixed(2)}
+        </p>
+        <button
+          className="btn product-card-btn"
+          onClick={handleAdd}
+          disabled={outOfStock}
+        >
+          {outOfStock ? 'Out of Stock' : 'Add to Bag'}
+        </button>
       </div>
-      <h3 onClick={() => navigate(`/products/${href}`)}>{name}</h3>
-      <p>
-        {hasVariants && product.variants.length > 1 && <span className="from-label">From </span>}
-        ₹{displayPrice?.toFixed(2)}
-      </p>
-      <button
-        className="btn product-card-btn"
-        onClick={handleAdd}
-        disabled={outOfStock}
-      >
-        {outOfStock ? 'Out of Stock' : 'Add to Bag'}
-      </button>
-    </div>
+
+      {showSizeModal && (
+        <SizeSelectModal
+          product={product}
+          onClose={() => setShowSizeModal(false)}
+        />
+      )}
+    </>
   );
 }
