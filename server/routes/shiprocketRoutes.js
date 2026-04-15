@@ -243,7 +243,7 @@ router.post("/assign-awb/:orderId", protect, isAdmin, async (req, res) => {
     let pickupError = null;
     try {
       pickupResult = await requestPickup(order.shipmentId);
-      console.log("[Shiprocket Pickup] Result:", JSON.stringify(pickupResult));
+      if (process.env.NODE_ENV !== 'production') console.log("[Shiprocket Pickup] Result:", JSON.stringify(pickupResult));
     } catch (pickupErr) {
       pickupError = pickupErr.message;
       console.error("[Shiprocket Pickup] Failed:", pickupErr.message);
