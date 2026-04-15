@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import SEOHead from '../components/seo/SEOHead';
+import { BASE_URL } from '../components/seo/SEOHead';
+import OptimizedImage from '../components/common/OptimizedImage';
 import './ProductDetail.css';
 
 export default function ProductDetail() {
@@ -118,8 +121,35 @@ export default function ProductDetail() {
     },
   ];
 
+  const productSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name,
+    description: product.description || '',
+    image: primaryImage,
+    url: `${BASE_URL}/products/${product.slug || product._id || product.id}`,
+    brand: { '@type': 'Brand', name: 'Bananthi Mane' },
+    offers: {
+      '@type': 'Offer',
+      price: activePrice,
+      priceCurrency: 'INR',
+      availability: outOfStock
+        ? 'https://schema.org/OutOfStock'
+        : 'https://schema.org/InStock',
+      seller: { '@type': 'Organization', name: 'Bananthi Mane' },
+    },
+  };
+
   return (
     <main className="page-enter">
+      <SEOHead
+        title={name}
+        description={product.description?.substring(0, 160) || `Buy ${name} from Bananthi Mane — 100% natural, traditionally prepared postpartum care product.`}
+        canonical={`/products/${product.slug || product._id || product.id}`}
+        ogType="product"
+        ogImage={primaryImage}
+        structuredData={productSchema}
+      />
       <div className="pdp-container">
         <div className="pdp-image-col">
           <div
@@ -128,10 +158,15 @@ export default function ProductDetail() {
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
-            <img
+            <OptimizedImage
               src={images[activeImg]}
               alt={`${name} — image ${activeImg + 1}`}
               className="pdp-main-img"
+              width={600}
+              height={560}
+              sizes="(max-width: 768px) 100vw, 50vw"
+              loading="eager"
+              fetchPriority="high"
             />
 
             {images.length > 1 && (

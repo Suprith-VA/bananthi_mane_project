@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import SEOHead from '../components/seo/SEOHead';
 import './Cart.css';
 
 export default function Cart() {
@@ -8,6 +9,7 @@ export default function Cart() {
 
   return (
     <main className="page-enter cart-page">
+      <SEOHead title="Your Cart" noIndex />
       <div className="page-header">
         <h1>Your Cart</h1>
       </div>

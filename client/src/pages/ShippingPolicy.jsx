@@ -1,8 +1,14 @@
+import SEOHead from '../components/seo/SEOHead';
 import './StaticPage.css';
 
 export default function ShippingPolicy() {
   return (
     <main className="static-page page-enter">
+      <SEOHead
+        title="Shipping & Delivery Policy"
+        description="Bananthi Mane shipping policy — delivery timelines, shipping charges, and pan-India delivery details for our natural postpartum products."
+        canonical="/shipping-policy"
+      />
       <div className="static-header">
         <p className="static-label">Legal</p>
         <h1>Shipping &amp; Delivery Policy</h1>

@@ -1,8 +1,14 @@
+import SEOHead from '../components/seo/SEOHead';
 import './StaticPage.css';
 
 export default function TermsConditions() {
   return (
     <main className="static-page page-enter">
+      <SEOHead
+        title="Terms & Conditions"
+        description="Terms and conditions for using Bananthi Mane's website and purchasing our natural postpartum care products."
+        canonical="/terms-conditions"
+      />
       <div className="static-header">
         <p className="static-label">Legal</p>
         <h1>Terms &amp; Conditions</h1>

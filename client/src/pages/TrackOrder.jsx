@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import SEOHead from '../components/seo/SEOHead';
 import './TrackOrder.css';
 
 const STEPS = ['Processing', 'Packed', 'Shipped', 'Delivered'];
@@ -116,6 +117,11 @@ export default function TrackOrder() {
 
   return (
     <main className="track-order-page page-enter">
+      <SEOHead
+        title="Track Your Order"
+        description="Track your Bananthi Mane order delivery status. Enter your Order ID and email to check where your package is."
+        canonical="/track-order"
+      />
       <div className="track-container">
         <div className="track-header">
           <h1>Track Your Order</h1>

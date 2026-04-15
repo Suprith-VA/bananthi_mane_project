@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import SEOHead from '../components/seo/SEOHead';
 import './Checkout.css';
 
 const API = '';
@@ -238,6 +239,7 @@ export default function Checkout() {
   if (successOrder) {
     return (
       <main className="page-enter checkout-page">
+        <SEOHead title="Checkout" noIndex />
         <div className="checkout-success">
           <h2>Order Placed Successfully!</h2>
           <p>Thank you for your order.</p>
@@ -258,6 +260,7 @@ export default function Checkout() {
 
   return (
     <main className="page-enter checkout-page">
+      <SEOHead title="Checkout" noIndex />
       <div className="page-header">
         <h1>Checkout</h1>
       </div>

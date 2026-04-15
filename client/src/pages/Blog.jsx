@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import SEOHead from '../components/seo/SEOHead';
 import BlogCard from '../components/blog/BlogCard';
 import './Blog.css';
 
@@ -15,6 +16,11 @@ export default function Blog() {
 
   return (
     <main className="page-enter">
+      <SEOHead
+        title="The Motherhood Blog"
+        description="Stories, wisdom, and practical guides for the postpartum journey. Evidence-based wellness advice for new mothers."
+        canonical="/blog"
+      />
       <div className="page-header">
         <h1>The Motherhood Blog</h1>
         <p>Stories, wisdom, and practical guides for the postpartum journey.</p>

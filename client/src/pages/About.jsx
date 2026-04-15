@@ -1,8 +1,14 @@
+import SEOHead from '../components/seo/SEOHead';
 import './StaticPage.css';
 
 export default function About() {
   return (
     <main className="about-page page-enter">
+      <SEOHead
+        title="About Us"
+        description="Bananthi Mane was born from a deep respect for traditional postpartum wisdom. We provide 100% natural products handcrafted for new mothers' recovery and wellness."
+        canonical="/about"
+      />
       {/* ─── Hero ────────────────────────────────────────────── */}
       <section className="about-hero">
         <div className="about-hero-inner">

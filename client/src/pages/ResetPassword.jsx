@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import SEOHead from '../components/seo/SEOHead';
 import './ResetPassword.css';
 
 const PW_MIN = 8;
@@ -50,6 +51,7 @@ export default function ResetPassword() {
   if (success) {
     return (
       <main className="reset-page page-enter">
+        <SEOHead title="Reset Password" noIndex />
         <div className="reset-card">
           <div className="reset-success-icon">✓</div>
           <h2>Password Reset Successful</h2>
@@ -61,6 +63,7 @@ export default function ResetPassword() {
 
   return (
     <main className="reset-page page-enter">
+      <SEOHead title="Reset Password" noIndex />
       <div className="reset-card">
         <h2>Set New Password</h2>
         <p className="reset-subtitle">Choose a strong password for your account.</p>

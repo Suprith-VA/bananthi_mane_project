@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import SEOHead from '../components/seo/SEOHead';
 import './OrderHistory.css';
 
 const STATUS_CLASS = {
@@ -49,6 +50,7 @@ export default function OrderHistory() {
   if (!userInfo) {
     return (
       <main className="order-history-page page-enter">
+        <SEOHead title="Order History" noIndex />
         <div className="oh-container">
           <p>Please <Link to="/" className="link-terracotta">sign in</Link> to view your order history.</p>
         </div>
@@ -58,6 +60,7 @@ export default function OrderHistory() {
 
   return (
     <main className="order-history-page page-enter">
+      <SEOHead title="Order History" noIndex />
       <div className="oh-container">
         <div className="oh-header">
           <h1>Order History</h1>

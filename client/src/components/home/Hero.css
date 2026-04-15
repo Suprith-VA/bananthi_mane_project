@@ -29,7 +29,6 @@
 
 .hero-image {
   min-height: 300px;
-  background: url('/images/main.png') center/cover no-repeat;
   flex: 1;
 }
 

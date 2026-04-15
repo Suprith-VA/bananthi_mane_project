@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import SEOHead from '../components/seo/SEOHead';
 import ProductCard from '../components/products/ProductCard';
 import './Products.css';
 
@@ -53,6 +54,11 @@ export default function Products() {
 
   return (
     <main className="page-enter">
+      <SEOHead
+        title="Products"
+        description="Browse handcrafted cold-pressed oils, organic powders, and homemade pudi for postpartum care. 100% natural, no preservatives — ships pan India."
+        canonical="/products"
+      />
       <div className="page-header">
         <h1>All Products</h1>
         <p>Traditional remedies crafted for postpartum healing.</p>

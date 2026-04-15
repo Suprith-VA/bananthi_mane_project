@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SEOHead from '../components/seo/SEOHead';
 import './Services.css';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -49,9 +50,18 @@ export default function Contact() {
     }
   };
 
+  const seoHead = (
+    <SEOHead
+      title="Contact Us"
+      description="Get in touch with Bananthi Mane for questions about orders, products, or postpartum services. Email sales@bananthimane.com or call +91-9945690318."
+      canonical="/contact"
+    />
+  );
+
   if (sent) {
     return (
       <main className="page-enter">
+        {seoHead}
         <div className="form-layout">
           <div className="contact-success">
             <span className="contact-success-icon">✓</span>
@@ -66,6 +76,7 @@ export default function Contact() {
 
   return (
     <main className="page-enter">
+      {seoHead}
       <div className="form-layout">
         <h1>Contact Us</h1>
         <p style={{ color: '#666', marginBottom: '1.5rem', lineHeight: 1.6, textAlign: 'center' }}>

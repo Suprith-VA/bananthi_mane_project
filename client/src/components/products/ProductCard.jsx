@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import OptimizedImage from '../common/OptimizedImage';
 import SizeSelectModal from './SizeSelectModal';
 import './ProductCard.css';
 
@@ -44,7 +45,13 @@ export default function ProductCard({ product }) {
     <>
       <div className={`product-card ${outOfStock ? 'out-of-stock' : ''}`}>
         <div className="product-card-img-wrap" onClick={() => navigate(`/products/${href}`)}>
-          <img src={image} alt={name} />
+          <OptimizedImage
+            src={image}
+            alt={name}
+            width={400}
+            height={300}
+            sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
+          />
           {outOfStock && <span className="oos-overlay">Out of Stock</span>}
         </div>
         <h3 onClick={() => navigate(`/products/${href}`)}>{name}</h3>

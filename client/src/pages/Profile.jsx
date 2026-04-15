@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import SEOHead from '../components/seo/SEOHead';
 import './Profile.css';
 
 export default function Profile() {
@@ -23,6 +24,7 @@ export default function Profile() {
   if (!userInfo) {
     return (
       <main className="profile-page page-enter">
+        <SEOHead title="My Profile" noIndex />
         <div className="profile-container">
           <p>Please <Link to="/" className="link-terracotta">sign in</Link> to view your profile.</p>
         </div>
@@ -116,6 +118,7 @@ export default function Profile() {
 
   return (
     <main className="profile-page page-enter">
+      <SEOHead title="My Profile" noIndex />
       <div className="profile-container">
         <div className="profile-header">
           <div className="profile-avatar">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import OptimizedImage from '../common/OptimizedImage';
 import SizeSelectModal from '../products/SizeSelectModal';
 import './BestsellerSection.css';
 
@@ -62,9 +63,13 @@ export default function BestsellerSection() {
               : (p.stockQuantity ?? p.stock ?? 1) === 0;
             return (
               <div key={id} className="bestseller-card">
-                <img
+                <OptimizedImage
                   src={p.image || '/images/main.png'}
                   alt={name}
+                  width={400}
+                  height={350}
+                  sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
+                  className="bestseller-card-img"
                   onClick={() => navigate(`/products/${href}`)}
                 />
                 <h3 onClick={() => navigate(`/products/${href}`)}>{name}</h3>

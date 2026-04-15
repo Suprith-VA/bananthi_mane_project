@@ -1,8 +1,14 @@
+import SEOHead from '../components/seo/SEOHead';
 import './StaticPage.css';
 
 export default function ReturnPolicy() {
   return (
     <main className="static-page page-enter">
+      <SEOHead
+        title="Cancellation & Refund Policy"
+        description="Bananthi Mane cancellation and refund policy — how to cancel orders, return products, and get refunds for our natural postpartum care products."
+        canonical="/cancellation-refund-policy"
+      />
       <div className="static-header">
         <p className="static-label">Legal</p>
         <h1>Cancellation &amp; Refund Policy</h1>

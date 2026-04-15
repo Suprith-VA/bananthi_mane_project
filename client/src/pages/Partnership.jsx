@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SEOHead from '../components/seo/SEOHead';
 import './Partnership.css';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -77,9 +78,18 @@ export default function Partnership() {
     }
   };
 
+  const seoHead = (
+    <SEOHead
+      title="Sales & Partnership"
+      description="Partner with Bananthi Mane — wholesale, retail, and distribution opportunities for natural postpartum care products across India."
+      canonical="/partnership"
+    />
+  );
+
   if (sent) {
     return (
       <main className="page-enter">
+        {seoHead}
         <div className="form-layout">
           <div className="contact-success">
             <span className="contact-success-icon">✓</span>
@@ -99,6 +109,7 @@ export default function Partnership() {
 
   return (
     <main className="page-enter">
+      {seoHead}
       <div className="form-layout partnership-form">
         <h1>Sales & Partnership</h1>
         <p className="form-intro">

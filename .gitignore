@@ -34,6 +34,7 @@ Changes.md
 Requirement_Specification.txt
 todo.text
 payments_shipping_stock_sync_83969fd9.plan.md
+bananthi_mane_google_analysis/
 
 # Old ad-hoc test case files (replaced by tests/ directory)
 TestCases_Changes5.md

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SEOHead from '../components/seo/SEOHead';
 import './Services.css';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -47,9 +48,18 @@ export default function Services() {
     setForm({ firstName: '', lastName: '', email: '', dueDate: '', interest: '' });
   };
 
+  const seoHead = (
+    <SEOHead
+      title="Postpartum Services"
+      description="Traditional in-home postpartum massage, dietary planning, and newborn care assistance. Join the waitlist for Bananthi Mane postpartum services."
+      canonical="/services"
+    />
+  );
+
   if (sent) {
     return (
       <main className="page-enter">
+        {seoHead}
         <div className="form-layout">
           <div className="contact-success">
             <span className="contact-success-icon">✓</span>
@@ -64,6 +74,7 @@ export default function Services() {
 
   return (
     <main className="page-enter">
+      {seoHead}
       <div className="form-layout">
         <h1>Postpartum Services</h1>
         <p className="form-intro">

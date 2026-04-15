@@ -7,10 +7,6 @@
 
 .fj-image {
   min-height: 280px;
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  /* background-image is set dynamically via inline style */
 }
 
 .fj-content {

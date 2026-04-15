@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import OptimizedImage from '../common/OptimizedImage';
 import './FeaturedJournal.css';
 
 const FALLBACK_IMAGE = '/images/blog_2.png';
@@ -29,11 +30,13 @@ export default function FeaturedJournal() {
 
   return (
     <div className="featured-journal-home">
-      <div
+      <OptimizedImage
+        src={imageUrl}
+        alt={title}
         className="fj-image"
-        style={{ backgroundImage: `url('${imageUrl}')` }}
-        role="img"
-        aria-label={title}
+        width={800}
+        height={500}
+        sizes="(max-width: 768px) 100vw, 50vw"
       />
       <div className="fj-content">
         <p className="label">The Motherhood Blog</p>

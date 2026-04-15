@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import SEOHead from '../components/seo/SEOHead';
 import './StaticPage.css';
 
 const quickFaqs = [
@@ -214,8 +215,27 @@ function AccordionItem({ q, a }) {
 }
 
 export default function FAQ() {
+  const faqSchema = useMemo(() => {
+    const allItems = faqData.flatMap(s => s.items);
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: allItems.map(({ q, a }) => ({
+        '@type': 'Question',
+        name: q,
+        acceptedAnswer: { '@type': 'Answer', text: a },
+      })),
+    };
+  }, []);
+
   return (
     <main className="static-page page-enter">
+      <SEOHead
+        title="FAQ"
+        description="Frequently asked questions about Bananthi Mane products, shipping, returns, organic powders, postpartum care, and payment options."
+        canonical="/faq"
+        structuredData={faqSchema}
+      />
       <div className="static-header">
         <p className="static-label">Support</p>
         <h1>Frequently Asked Questions</h1>

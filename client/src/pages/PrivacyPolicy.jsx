@@ -1,8 +1,14 @@
+import SEOHead from '../components/seo/SEOHead';
 import './StaticPage.css';
 
 export default function PrivacyPolicy() {
   return (
     <main className="static-page page-enter">
+      <SEOHead
+        title="Privacy Policy"
+        description="Bananthi Mane privacy policy — how we collect, use, and protect your personal information when you shop with us."
+        canonical="/privacy-policy"
+      />
       <div className="static-header">
         <p className="static-label">Legal</p>
         <h1>Privacy Policy</h1>

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import SEOHead from '../components/seo/SEOHead';
+import { BASE_URL } from '../components/seo/SEOHead';
 import './BlogPost.css';
 
 export default function BlogPost() {
@@ -37,13 +39,36 @@ export default function BlogPost() {
     );
   }
 
-  // Content may be a string (DB) or array of paragraphs (legacy static)
   const paragraphs = Array.isArray(post.content)
     ? post.content
     : post.content?.split('\n\n').filter(Boolean) ?? [];
 
+  const blogPostSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt || post.content?.substring(0, 160) || '',
+    image: post.featuredImage || post.image || '',
+    url: `${BASE_URL}/blog/${post.slug || post._id || post.id}`,
+    datePublished: post.publishedAt || post.createdAt,
+    author: { '@type': 'Organization', name: 'Bananthi Mane' },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Bananthi Mane',
+      logo: { '@type': 'ImageObject', url: `${BASE_URL}/logo.png` },
+    },
+  };
+
   return (
     <main className="page-enter blog-post-page">
+      <SEOHead
+        title={post.title}
+        description={post.excerpt || post.content?.substring(0, 160) || `Read "${post.title}" on the Bananthi Mane Motherhood Blog.`}
+        canonical={`/blog/${post.slug || post._id || post.id}`}
+        ogType="article"
+        ogImage={post.featuredImage || post.image || undefined}
+        structuredData={blogPostSchema}
+      />
       <Link to="/blog" className="blog-post-back">← Back to Blog</Link>
       <article className="blog-post-article">
         {(post.featuredImage || post.image) && (
@@ -51,6 +76,9 @@ export default function BlogPost() {
             src={post.featuredImage || post.image}
             alt={post.title}
             className="blog-post-image"
+            loading="lazy"
+            width="800"
+            height="450"
           />
         )}
         <h1>{post.title}</h1>
