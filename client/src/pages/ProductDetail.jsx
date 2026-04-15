@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import './ProductDetail.css';
@@ -14,6 +14,9 @@ export default function ProductDetail() {
   const [openAccordion, setOpenAccordion] = useState(null);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [addedFeedback, setAddedFeedback] = useState(false);
+  const [activeImg, setActiveImg] = useState(0);
+  const [touchStart, setTouchStart] = useState(null);
+  const galleryRef = useRef(null);
 
   useEffect(() => {
     setLoading(true);
@@ -28,6 +31,7 @@ export default function ProductDetail() {
       .then(data => {
         if (data) {
           setProduct(data);
+          setActiveImg(0);
           if (data.variants?.length > 0) {
             setSelectedVariant(data.variants[0]);
           }
@@ -36,6 +40,25 @@ export default function ProductDetail() {
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const images = product?.images?.length
+    ? product.images
+    : [product?.image || '/images/main.png'];
+
+  const goTo = useCallback((idx) => {
+    const clamped = Math.max(0, Math.min(idx, images.length - 1));
+    setActiveImg(clamped);
+  }, [images.length]);
+
+  const handleTouchStart = (e) => setTouchStart(e.touches[0].clientX);
+  const handleTouchEnd = (e) => {
+    if (touchStart === null) return;
+    const diff = touchStart - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 40) {
+      goTo(diff > 0 ? activeImg + 1 : activeImg - 1);
+    }
+    setTouchStart(null);
+  };
 
   if (loading) {
     return (
@@ -59,7 +82,7 @@ export default function ProductDetail() {
   const name = product.name || product.title;
   const hasVariants = product.variants?.length > 0;
   const activePrice = selectedVariant?.price ?? product.price;
-  const image = product.image || '/images/main.png';
+  const primaryImage = images[0];
   const outOfStock = hasVariants
     ? (selectedVariant?.stockQuantity ?? 0) === 0
     : (product.stockQuantity ?? product.stock ?? 1) === 0;
@@ -71,7 +94,7 @@ export default function ProductDetail() {
       name,
       unitLabel: selectedVariant?.unitLabel || null,
       price: activePrice,
-      image,
+      image: primaryImage,
     });
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 1500);
@@ -99,7 +122,64 @@ export default function ProductDetail() {
     <main className="page-enter">
       <div className="pdp-container">
         <div className="pdp-image-col">
-          <img src={image} alt={name} />
+          <div
+            className="pdp-gallery"
+            ref={galleryRef}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            <img
+              src={images[activeImg]}
+              alt={`${name} — image ${activeImg + 1}`}
+              className="pdp-main-img"
+            />
+
+            {images.length > 1 && (
+              <>
+                <button
+                  className="pdp-arrow pdp-arrow-left"
+                  onClick={() => goTo(activeImg - 1)}
+                  disabled={activeImg === 0}
+                  aria-label="Previous image"
+                >
+                  ‹
+                </button>
+                <button
+                  className="pdp-arrow pdp-arrow-right"
+                  onClick={() => goTo(activeImg + 1)}
+                  disabled={activeImg === images.length - 1}
+                  aria-label="Next image"
+                >
+                  ›
+                </button>
+
+                <div className="pdp-dots">
+                  {images.map((_, i) => (
+                    <button
+                      key={i}
+                      className={`pdp-dot ${i === activeImg ? 'active' : ''}`}
+                      onClick={() => goTo(i)}
+                      aria-label={`Go to image ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {images.length > 1 && (
+            <div className="pdp-thumbnails">
+              {images.map((src, i) => (
+                <button
+                  key={i}
+                  className={`pdp-thumb ${i === activeImg ? 'active' : ''}`}
+                  onClick={() => goTo(i)}
+                >
+                  <img src={src} alt={`${name} thumbnail ${i + 1}`} />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="pdp-info-col">

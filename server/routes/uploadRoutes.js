@@ -1,24 +1,26 @@
 import express from 'express';
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import { protect, isAdmin } from '../middleware/auth.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const router = express.Router();
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_SIZE_MB = 5;
 
-const storage = multer.diskStorage({
-  destination: path.join(__dirname, '..', 'uploads'),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const base = path.basename(file.originalname, ext)
-      .replace(/[^a-zA-Z0-9-_]/g, '-')
-      .toLowerCase()
-      .substring(0, 40);
-    cb(null, `${base}-${Date.now()}${ext}`);
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'bananthi-mane',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ quality: 'auto', fetch_format: 'auto' }],
   },
 });
 
@@ -26,7 +28,7 @@ const fileFilter = (_req, file, cb) => {
   if (ALLOWED_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error(`Invalid file type. Allowed: JPEG, PNG, WebP`), false);
+    cb(new Error('Invalid file type. Allowed: JPEG, PNG, WebP'), false);
   }
 };
 
@@ -36,16 +38,45 @@ const upload = multer({
   limits: { fileSize: MAX_SIZE_MB * 1024 * 1024 },
 });
 
-// POST /api/upload  (admin only)
+// POST /api/upload  (admin only) — single image
 router.post('/', protect, isAdmin, upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: 'No file uploaded' });
   }
-  const url = `/uploads/${req.file.filename}`;
-  res.json({ url, filename: req.file.filename, size: req.file.size });
+  res.json({
+    url: req.file.path,
+    publicId: req.file.filename,
+    size: req.file.size,
+  });
 });
 
-// Multer error handler
+// POST /api/upload/multiple  (admin only) — up to 6 images
+router.post('/multiple', protect, isAdmin, upload.array('images', 6), (req, res) => {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ message: 'No files uploaded' });
+  }
+  const results = req.files.map(f => ({
+    url: f.path,
+    publicId: f.filename,
+    size: f.size,
+  }));
+  res.json(results);
+});
+
+// DELETE /api/upload  (admin only) — delete by publicId
+router.delete('/', protect, isAdmin, async (req, res) => {
+  try {
+    const { publicId } = req.body;
+    if (!publicId) {
+      return res.status(400).json({ message: 'publicId is required' });
+    }
+    await cloudinary.uploader.destroy(publicId);
+    res.json({ message: 'Image deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message || 'Failed to delete image' });
+  }
+});
+
 router.use((err, _req, res, _next) => {
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ message: `File too large. Maximum size is ${MAX_SIZE_MB}MB.` });

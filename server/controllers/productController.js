@@ -164,6 +164,12 @@ export const updateProduct = async (req, res) => {
     delete data._id;
     delete data.id;
 
+    if (Array.isArray(data.images)) {
+      data.image = data.images[0] || '/images/main.png';
+    } else if (data.image && !data.images) {
+      data.images = [data.image];
+    }
+
     if (Array.isArray(variants)) {
       const variantData = variants.map((v, i) => ({
         productId: id,

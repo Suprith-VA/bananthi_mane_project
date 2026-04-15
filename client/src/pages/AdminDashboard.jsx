@@ -72,7 +72,7 @@ function ProductModal({ product, onClose, onSave, token }) {
     description: "",
     category: "Cold Pressed Oil",
     stockQuantity: 100,
-    image: "",
+    images: [],
     isActive: true,
     isBestseller: false,
     keyBenefits: "",
@@ -89,6 +89,12 @@ function ProductModal({ product, onClose, onSave, token }) {
       }))
     : [{ unitLabel: "", price: "", stockQuantity: 50 }];
 
+  const initImages = product?.images?.length
+    ? [...product.images]
+    : product?.image
+      ? [product.image]
+      : [];
+
   const [form, setForm] = useState(
     product
       ? {
@@ -96,7 +102,7 @@ function ProductModal({ product, onClose, onSave, token }) {
           description: product.description || "",
           category: product.category || "Cold Pressed Oil",
           stockQuantity: product.stockQuantity ?? product.stock ?? 100,
-          image: product.image || "",
+          images: initImages,
           isActive: product.isActive ?? true,
           isBestseller: product.isBestseller ?? false,
           keyBenefits: product.keyBenefits || "",
@@ -107,6 +113,63 @@ function ProductModal({ product, onClose, onSave, token }) {
       : blank,
   );
   const [err, setErr] = useState("");
+  const [imgUploading, setImgUploading] = useState(false);
+  const [pasteUrl, setPasteUrl] = useState("");
+
+  const addImageUrl = (url) => {
+    if (!url || form.images.includes(url)) return;
+    setForm({ ...form, images: [...form.images, url] });
+  };
+
+  const removeImage = (idx) => {
+    setForm({ ...form, images: form.images.filter((_, i) => i !== idx) });
+  };
+
+  const moveImage = (from, to) => {
+    if (to < 0 || to >= form.images.length) return;
+    const imgs = [...form.images];
+    const [moved] = imgs.splice(from, 1);
+    imgs.splice(to, 0, moved);
+    setForm({ ...form, images: imgs });
+  };
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    setImgUploading(true);
+    setErr("");
+    try {
+      for (const file of files) {
+        const fd = new FormData();
+        fd.append("image", file);
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: fd,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Upload failed");
+        addImageUrl(data.url);
+        setForm((prev) => ({
+          ...prev,
+          images: prev.images.includes(data.url) ? prev.images : [...prev.images, data.url],
+        }));
+      }
+    } catch (uploadErr) {
+      setErr(uploadErr.message);
+    } finally {
+      setImgUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const handlePasteAdd = () => {
+    const trimmed = pasteUrl.trim();
+    if (trimmed) {
+      addImageUrl(trimmed);
+      setPasteUrl("");
+    }
+  };
 
   const updateVariant = (index, field, value) => {
     const updated = [...form.variants];
@@ -131,8 +194,8 @@ function ProductModal({ product, onClose, onSave, token }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.image.trim()) {
-      setErr("Image is required — upload a file or paste a URL.");
+    if (form.images.length === 0) {
+      setErr("At least one image is required — upload a file or paste a URL.");
       return;
     }
 
@@ -147,6 +210,7 @@ function ProductModal({ product, onClose, onSave, token }) {
     setErr("");
     const payload = {
       ...form,
+      image: form.images[0],
       variants: validVariants.map((v, i) => ({
         unitLabel: v.unitLabel.trim(),
         price: Number(v.price),
@@ -192,14 +256,77 @@ function ProductModal({ product, onClose, onSave, token }) {
               ))}
             </select>
           </label>
-          <label>
-            Image *
-            <ImageUploadField
-              value={form.image}
-              onChange={(url) => setForm({ ...form, image: url })}
-              token={token}
-            />
-          </label>
+
+          {/* ── Multi-Image Manager ── */}
+          <fieldset className="variant-fieldset">
+            <legend>Product Images {form.images.length > 0 && `(${form.images.length})`}</legend>
+
+            {form.images.length > 0 && (
+              <div className="pm-image-grid">
+                {form.images.map((url, i) => (
+                  <div key={i} className="pm-image-card">
+                    <img src={url} alt={`Product ${i + 1}`} />
+                    {i === 0 && <span className="pm-primary-badge">Primary</span>}
+                    <div className="pm-image-actions">
+                      <button
+                        type="button"
+                        onClick={() => moveImage(i, i - 1)}
+                        disabled={i === 0}
+                        title="Move left"
+                      >
+                        ◀
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveImage(i, i + 1)}
+                        disabled={i === form.images.length - 1}
+                        title="Move right"
+                      >
+                        ▶
+                      </button>
+                      <button
+                        type="button"
+                        className="pm-delete-btn"
+                        onClick={() => removeImage(i)}
+                        title="Remove image"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="pm-upload-row">
+              <label className="img-file-btn">
+                {imgUploading ? "Uploading…" : "Upload Images"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/jpg,image/png,image/webp"
+                  multiple
+                  style={{ display: "none" }}
+                  onChange={handleFileUpload}
+                  disabled={imgUploading}
+                />
+              </label>
+              <span className="img-upload-hint">JPEG / PNG / WebP · max 5 MB each · up to 6</span>
+            </div>
+            <div className="pm-paste-row">
+              <input
+                type="text"
+                className="img-url-input"
+                placeholder="Paste image URL and press Add"
+                value={pasteUrl}
+                onChange={(e) => setPasteUrl(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handlePasteAdd(); } }}
+              />
+              <button type="button" className="variant-add-btn" onClick={handlePasteAdd}>
+                + Add URL
+              </button>
+            </div>
+          </fieldset>
+
           <label>
             Description
             <textarea
