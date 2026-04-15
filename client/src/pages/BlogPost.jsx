@@ -76,9 +76,6 @@ export default function BlogPost() {
             src={post.featuredImage || post.image}
             alt={post.title}
             className="blog-post-image"
-            loading="lazy"
-            width="800"
-            height="450"
           />
         )}
         <h1>{post.title}</h1>

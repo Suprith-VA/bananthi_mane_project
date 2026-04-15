@@ -12,8 +12,6 @@ export default function BlogCard({ post }) {
         <OptimizedImage
           src={post.featuredImage || post.image || '/images/blog_2.png'}
           alt={post.title}
-          width={600}
-          height={400}
           sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
         />
       </Link>

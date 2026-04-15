@@ -131,7 +131,7 @@ export default function Header() {
     <>
       <header className="site-header">
         <Link to="/" className="logo" onClick={handleNavClick}>
-          <img src="/name_logo.png" alt="Bananthi Mane" className="logo-img" width="150" height="40" />
+          <img src="/name_logo.png" alt="Bananthi Mane" className="logo-img" />
         </Link>
 
         <nav className="main-nav">

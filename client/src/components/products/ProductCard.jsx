@@ -48,8 +48,6 @@ export default function ProductCard({ product }) {
           <OptimizedImage
             src={image}
             alt={name}
-            width={400}
-            height={300}
             sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
           />
           {outOfStock && <span className="oos-overlay">Out of Stock</span>}

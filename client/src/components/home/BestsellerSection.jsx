@@ -66,10 +66,7 @@ export default function BestsellerSection() {
                 <OptimizedImage
                   src={p.image || '/images/main.png'}
                   alt={name}
-                  width={400}
-                  height={350}
                   sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
-                  className="bestseller-card-img"
                   onClick={() => navigate(`/products/${href}`)}
                 />
                 <h3 onClick={() => navigate(`/products/${href}`)}>{name}</h3>

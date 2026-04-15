@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/seo/SEOHead';
 import { BASE_URL } from '../components/seo/SEOHead';
-import OptimizedImage from '../components/common/OptimizedImage';
 import './ProductDetail.css';
 
 export default function ProductDetail() {
@@ -158,15 +157,10 @@ export default function ProductDetail() {
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
-            <OptimizedImage
+            <img
               src={images[activeImg]}
               alt={`${name} — image ${activeImg + 1}`}
               className="pdp-main-img"
-              width={600}
-              height={560}
-              sizes="(max-width: 768px) 100vw, 50vw"
-              loading="eager"
-              fetchPriority="high"
             />
 
             {images.length > 1 && (

@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import OptimizedImage from '../common/OptimizedImage';
 import './Hero.css';
 
 export default function Hero() {
@@ -16,16 +15,7 @@ export default function Hero() {
           Shop The Products
         </button>
       </div>
-      <OptimizedImage
-        src="/images/main.png"
-        alt="Bananthi Mane — Natural postpartum care products for new mothers"
-        className="hero-image"
-        width={800}
-        height={600}
-        sizes="(max-width: 768px) 100vw, 55vw"
-        loading="eager"
-        fetchPriority="high"
-      />
+      <div className="hero-image" role="img" aria-label="Bananthi Mane — Natural postpartum care products for new mothers" />
     </div>
   );
 }

@@ -37,8 +37,8 @@ export default function Footer() {
       <div className="footer-top">
         <div className="footer-links">
           <div className="footer-brand">
-            <img src="/logo.png" alt="Bananthi Mane Logo" className="footer-main-logo" width="60" height="60" loading="lazy" />
-            <img src="/name_logo.png" alt="Bananthi Mane" className="footer-name-logo" width="150" height="40" loading="lazy" />
+            <img src="/logo.png" alt="Bananthi Mane Logo" className="footer-main-logo" />
+            <img src="/name_logo.png" alt="Bananthi Mane" className="footer-name-logo" />
           </div>
           <div className="footer-link-columns">
             <ul>
