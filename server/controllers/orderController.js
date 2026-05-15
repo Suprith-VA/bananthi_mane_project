@@ -4,6 +4,12 @@ import { isValidUUID, fulfillmentToStatus } from '../utils/helpers.js';
 import { sendOrderConfirmationEmail, sendOrderStatusChangeEmail, sendLowStockAlertEmail, sendCustomerOrderConfirmationEmail, sendCustomerShippingUpdateEmail } from '../services/emailService.js';
 
 const GST_RATE = 0.05;
+const SHIPPING_PREPAID = 100;
+const SHIPPING_COD = 150;
+
+export function getShippingCharge(paymentMethod) {
+  return paymentMethod === 'COD' ? SHIPPING_COD : SHIPPING_PREPAID;
+}
 
 export async function verifyPrices(items) {
   let serverTotal = 0;
@@ -24,10 +30,10 @@ export async function verifyPrices(items) {
   return Math.round(serverTotal * 100) / 100;
 }
 
-export function computeGst(subtotal) {
+export function computeGst(subtotal, shippingCharge = 0) {
   const gst = Math.round(subtotal * GST_RATE * 100) / 100;
-  const total = Math.round((subtotal + gst) * 100) / 100;
-  return { subtotal, gstAmount: gst, totalPrice: total };
+  const total = Math.round((subtotal + gst + shippingCharge) * 100) / 100;
+  return { subtotal, gstAmount: gst, shippingCharge, totalPrice: total };
 }
 
 async function syncProductStock(tx, productId) {
@@ -97,9 +103,11 @@ export const createOrder = async (req, res) => {
       }
     }
 
-    // Server-side price verification with GST
+    // Server-side price verification with GST + shipping
+    const method = paymentInfo?.paymentMethod || 'COD';
+    const shipping = getShippingCharge(method);
     const expectedSubtotal = await verifyPrices(normalizedItems);
-    const { subtotal, gstAmount, totalPrice: expectedTotal } = computeGst(expectedSubtotal);
+    const { subtotal, gstAmount, shippingCharge, totalPrice: expectedTotal } = computeGst(expectedSubtotal, shipping);
     const submittedTotal = Math.round((totalPrice || 0) * 100) / 100;
     if (Math.abs(expectedTotal - submittedTotal) > 1) {
       return res.status(400).json({
@@ -107,7 +115,6 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const method = paymentInfo?.paymentMethod || 'COD';
     const pStatus = paymentInfo?.paymentStatus || 'Pending';
     const isPaid = pStatus === 'Paid';
 
@@ -120,6 +127,7 @@ export const createOrder = async (req, res) => {
           guestName: guestName?.trim(),
           subtotalPrice: subtotal,
           gstAmount,
+          shippingCharge,
           totalPrice: expectedTotal,
           shippingAddress: shippingAddress || null,
           razorpayOrderId: paymentInfo?.razorpayOrderId,

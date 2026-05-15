@@ -741,6 +741,12 @@ function OrderDetailModal({ order, onClose }) {
               <span>₹{order.gstAmount?.toFixed(2)}</span>
             </div>
           )}
+          {order.shippingCharge != null && (
+            <div className="od-row">
+              <strong>Shipping</strong>
+              <span>₹{order.shippingCharge?.toFixed(2)}</span>
+            </div>
+          )}
           <div className="od-row">
             <strong>Total</strong>
             <span>₹{order.totalPrice?.toFixed(2)}</span>

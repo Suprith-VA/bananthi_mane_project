@@ -57,9 +57,12 @@ export default function Checkout() {
   }, [successOrder]);
 
   const GST_RATE = 0.05;
+  const SHIPPING_PREPAID = 100;
+  const SHIPPING_COD = 150;
   const cartItems = Object.values(cart);
   const gstAmount = Math.round(totalPrice * GST_RATE * 100) / 100;
-  const grandTotal = Math.round((totalPrice + gstAmount) * 100) / 100;
+  const shippingCharge = paymentMethod === 'COD' ? SHIPPING_COD : SHIPPING_PREPAID;
+  const grandTotal = Math.round((totalPrice + gstAmount + shippingCharge) * 100) / 100;
 
   const buildOrderItems = () =>
     cartItems.map((item) => ({
@@ -366,7 +369,7 @@ export default function Checkout() {
                 />
                 <div className="payment-option-info">
                   <span className="payment-option-title">Pay Online (Razorpay)</span>
-                  <span className="payment-option-desc">UPI, Cards, Netbanking, Wallets</span>
+                  <span className="payment-option-desc">UPI, Cards, Netbanking, Wallets — Shipping: ₹{SHIPPING_PREPAID}</span>
                 </div>
               </label>
 
@@ -380,7 +383,7 @@ export default function Checkout() {
                 />
                 <div className="payment-option-info">
                   <span className="payment-option-title">Cash on Delivery</span>
-                  <span className="payment-option-desc">Pay when you receive the order</span>
+                  <span className="payment-option-desc">Pay when you receive the order — Shipping: ₹{SHIPPING_COD}</span>
                 </div>
               </label>
             </div>
@@ -411,6 +414,10 @@ export default function Checkout() {
           <div className="checkout-summary-line checkout-summary-gst">
             <span>GST (5%)</span>
             <span>Rs. {gstAmount.toFixed(2)}</span>
+          </div>
+          <div className="checkout-summary-line checkout-summary-shipping">
+            <span>Shipping ({paymentMethod === 'COD' ? 'COD' : 'Prepaid'})</span>
+            <span>Rs. {shippingCharge.toFixed(2)}</span>
           </div>
           <div className="checkout-summary-total">
             <span>Total</span>

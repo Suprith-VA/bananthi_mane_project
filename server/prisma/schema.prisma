@@ -79,6 +79,7 @@ model Order {
   guestName         String?
   subtotalPrice     Float?
   gstAmount         Float?
+  shippingCharge    Float?
   totalPrice        Float
   status            String    @default("pending")
   fulfillmentStatus String    @default("Processing")
