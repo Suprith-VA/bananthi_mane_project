@@ -115,11 +115,11 @@ export default function About() {
         </div>
       </section>
 
-      {/* ─── Founders ────────────────────────────────────────── */}
+      {/* ─── Founder ─────────────────────────────────────────── */}
       <section className="about-founders-section">
         <div className="about-section-inner">
-          <span className="about-section-chip chip-green">Our Founders</span>
-          <h2>The Faces Behind Bananthi Mane</h2>
+          <span className="about-section-chip chip-green">Our Founder</span>
+          <h2>The Face Behind Bananthi Mane</h2>
           <div className="founders-grid">
             <div className="founder-card">
               <div className="founder-avatar">
@@ -127,13 +127,6 @@ export default function About() {
               </div>
               <h3>Shwetha Shivakumar</h3>
               <p className="founder-role">Founder</p>
-            </div>
-            <div className="founder-card">
-              <div className="founder-avatar">
-                <span>KN</span>
-              </div>
-              <h3>Naveen K</h3>
-              <p className="founder-role">Co-Founder</p>
             </div>
           </div>
         </div>
